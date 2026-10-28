@@ -1,0 +1,1925 @@
+<!doctype html>
+<html lang="ru" data-theme="day">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Шахта углов — тренажёр по геометрии, 7 класс</title>
+<meta name="description" content="Тренажёр по геометрии для 7 класса: смежные и вертикальные углы. Чертежи каждый раз новые.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@1,500;1,700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --px:'Press Start 2P','Courier New',monospace;
+  --txt:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Segoe UI Symbol','Cambria Math','DejaVu Sans',sans-serif;
+  --ser:'Lora','Times New Roman',Georgia,'Cambria Math','Segoe UI Symbol',serif;
+  --sky:#8fd0ff;
+  --ink:#171717;
+  --win:#c6c6c6; --win-hi:#ffffff; --win-lo:#555555;
+  --panel:#e4e4e4;
+  --btn:#bdbdbd; --btn-hi:#f6f6f6; --btn-lo:#696969; --btn-hover:#d6e4ff;
+  --ok:#9be874; --warn:#ffd986; --info:#bcd6ff;
+  --board:#f3ecd6; --board-ink:#161616;
+  --xp:#5ed63b;
+  --hor:150px; --blk:64px;
+  --ground-filter:none;
+}
+:root[data-theme="night"]{
+  --sky:#0a1030;
+  --win:#a7a7b6; --win-hi:#dcdce8; --win-lo:#464658;
+  --panel:#d4d4e0;
+  --btn:#bcbccb; --btn-hi:#ececf6; --btn-lo:#5a5a6c; --btn-hover:#cfdcff;
+  --board:#e7e0ca;
+  --ground-filter:brightness(.42) saturate(.8);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--sky);color:var(--ink);font:400 17px/1.5 var(--txt);overflow-x:hidden}
+img,canvas{image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
+button{font:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.defs{position:absolute;width:0;height:0;overflow:hidden}
+
+/* ---------- мир: небо, трава, земля, камень ---------- */
+#world{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--sky)}
+#world .sky{position:absolute;left:0;right:0;top:0;height:var(--hor)}
+#world .stars{position:absolute;inset:0;display:none;background-repeat:repeat;background-size:768px 384px}
+:root[data-theme="night"] #world .stars{display:block}
+#world .cloud{position:absolute;image-rendering:pixelated;animation:drift 160s linear infinite alternate}
+:root[data-theme="night"] #world .cloud{opacity:.16}
+#world .c1{top:18px;left:6%;width:176px;height:auto}
+#world .c2{top:70px;left:58%;width:128px;height:auto;animation-duration:210s}
+#world .c3{top:8px;left:80%;width:96px;height:auto;animation-duration:260s}
+@keyframes drift{from{transform:translateX(-30px)}to{transform:translateX(60px)}}
+#world .orb{position:absolute;top:26px;right:9%;width:72px;height:72px;image-rendering:pixelated;display:none}
+@media (min-width:760px){#world .orb{display:block}}
+#world .ground,#world .deep{position:absolute;left:0;right:0;background-repeat:repeat-x;image-rendering:pixelated;filter:var(--ground-filter)}
+#world .ground{top:var(--hor);height:calc(var(--blk)*4);background-size:calc(var(--blk)*24) calc(var(--blk)*4)}
+#world .deep{top:calc(var(--hor) + var(--blk)*4);bottom:0;background-repeat:repeat;background-size:calc(var(--blk)*24) calc(var(--blk)*16)}
+@media (max-width:560px){:root{--blk:48px;--hor:112px}#world .c1{width:128px}#world .c2{width:96px}#world .c3{width:64px}}
+@media (prefers-reduced-motion:reduce){#world .cloud{animation:none}}
+
+/* ---------- каркас ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:780px;margin:0 auto;padding:12px 12px 6px}
+.logo{font-family:var(--px);font-size:13px;line-height:1.45;color:#fff;text-shadow:2px 2px 0 #1b2b45,-1px -1px 0 #1b2b45;cursor:pointer;background:none;border:0;padding:6px 0;text-align:left}
+.logo small{display:block;font-size:8px;margin-top:4px;color:#fff}
+.tools{display:flex;gap:6px;flex-wrap:nowrap}
+.wrap{max-width:780px;margin:0 auto;padding:6px 12px 110px}
+
+/* ---------- окно-инвентарь ---------- */
+.win{position:relative;background:var(--win);color:var(--ink);margin:10px 4px 18px;padding:16px 14px 18px;border-radius:0;
+  box-shadow:inset 4px 4px 0 var(--win-hi),inset -4px -4px 0 var(--win-lo),0 0 0 4px #111}
+.win.ok{animation:okflash .8s steps(8) 1}
+.win.shake{animation:shake .4s steps(8) 1}
+@keyframes okflash{0%,100%{outline:0 solid #3ddc3d}20%,60%{outline:6px solid #3ddc3d}40%,80%{outline:6px solid #c8ffb8}}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}35%{transform:translateX(7px)}55%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.win.ok,.win.shake{animation:none}.win.ok{outline:6px solid #3ddc3d}.win.shake{outline:6px solid #e0a02a}}
+.win h1,.win h2,.win h3{font-family:var(--px);font-weight:400;line-height:1.5;margin:0 0 10px}
+.win h1{font-size:18px}
+.win h2{font-size:14px}
+.win h3{font-size:11px}
+.inset{background:var(--panel);padding:12px;box-shadow:inset 3px 3px 0 var(--win-lo),inset -3px -3px 0 var(--win-hi)}
+.lead{font-size:18px;margin:0 0 12px}
+.muted{opacity:.78;font-size:15px}
+.px{font-family:var(--px)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.grow{flex:1 1 auto;min-width:0}
+
+/* ---------- кнопки как в игровом меню ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center;
+  font-family:var(--px);font-size:11px;line-height:1.6;color:var(--ink);background:var(--btn);
+  min-height:52px;min-width:52px;padding:10px 14px;margin:0;border:0;border-radius:0;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  box-shadow:inset 4px 4px 0 var(--btn-hi),inset -4px -4px 0 var(--btn-lo),0 0 0 3px #111}
+.btn:hover{background:var(--btn-hover);box-shadow:inset 4px 4px 0 #fff,inset -4px -4px 0 var(--btn-lo),0 0 0 3px #111,0 0 0 6px #ffe36b}
+.btn:active,.btn.pressed{transform:translateY(2px);box-shadow:inset 4px 4px 0 var(--btn-lo),inset -4px -4px 0 var(--btn-hi),0 0 0 3px #111}
+.btn:focus-visible{outline:4px solid #1d4ed8;outline-offset:5px}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+.btn[disabled]:hover{background:var(--btn);box-shadow:inset 4px 4px 0 var(--btn-hi),inset -4px -4px 0 var(--btn-lo),0 0 0 3px #111}
+.btn.block{display:flex;width:100%}
+.btn.big{min-height:60px;font-size:12px}
+.btn.good,.btn.good[disabled],.btn.good[disabled]:hover{background:var(--ok);opacity:1}
+.btn.bad,.btn.bad[disabled],.btn.bad[disabled]:hover{background:var(--warn);opacity:.9}
+.btn.math{font-family:var(--ser);font-style:italic;font-weight:700;font-size:25px;letter-spacing:.5px;line-height:1.2}
+.btn.math .ang,.m .ang{font-style:normal;font-weight:400;font-size:1.2em;font-family:'Segoe UI Symbol','Cambria Math','DejaVu Sans','Noto Sans Math',sans-serif}
+.btn.sel{background:#ffe9a6}
+.btn.ibtn{width:44px;min-width:44px;min-height:44px;padding:0}
+.btn.ibtn img{width:26px;height:26px;display:block}
+.btn.lock{opacity:.7}
+.opts{display:grid;gap:12px;grid-template-columns:1fr;margin:14px 3px 4px}
+.opts.two{grid-template-columns:1fr 1fr}
+@media (max-width:330px){.opts.two{grid-template-columns:1fr}}
+
+/* ---------- текст задач ---------- */
+.task{font:600 20px/1.5 var(--txt);margin:0 0 6px}
+.task .m,.m{font-family:var(--ser);font-style:italic;font-weight:700;font-size:1.18em;white-space:nowrap}
+.task .m.n,.m.n{font-family:var(--txt);font-style:normal;font-weight:700;font-size:1.05em}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0;font:500 17px/1.3 var(--txt)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:22px;height:22px;box-shadow:0 0 0 2px #111;flex:none}
+.sw.a{background:repeating-conic-gradient(#f2b705 0 25%,#ffe27a 0 50%) 0 0/8px 8px}
+.sw.b{background:repeating-linear-gradient(#1d8fb8 0 3px,#8be0f7 3px 8px)}
+.badge{display:inline-block;font-family:var(--px);font-size:9px;line-height:1.5;padding:6px 8px;background:#ffe9a6;box-shadow:inset 0 0 0 2px #111;margin:6px 0 0}
+
+/* ---------- чертёж на «табличке» ---------- */
+.board{position:relative;background:var(--board);margin:12px auto 8px;padding:12px;max-width:480px;
+  box-shadow:inset 0 0 0 4px #7a4b1f,inset 0 0 0 8px #bd8840,0 0 0 3px #111}
+.board:before,.board:after{content:"";position:absolute;width:6px;height:6px;background:#3b3b3b;top:11px}
+.board:before{left:11px}.board:after{right:11px}
+.board svg{display:block;width:100%;height:auto;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.board svg.tap{cursor:pointer}
+.lt{font:italic 700 27px 'Lora','Times New Roman',serif;fill:#111;paint-order:stroke;stroke:var(--board);stroke-width:5px;stroke-linejoin:round}
+.lt.o{font-size:23px}
+.tag-n{font:700 15px 'Inter',sans-serif;fill:#222;text-anchor:middle}
+.val{font:700 16px 'Inter',sans-serif;fill:#111;text-anchor:middle}
+.val.q{fill:#6b4f1a;font-size:19px}
+.rayem{stroke:#3b82f6;stroke-width:12;stroke-linecap:square}
+.fb,#nextbar{scroll-margin-bottom:100px}
+.pulse{animation:pulse .9s steps(2) infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+/* ---------- обратная связь ---------- */
+.fb{margin:14px 3px 4px;padding:12px 14px;font:500 18px/1.5 var(--txt);box-shadow:inset 0 0 0 3px #111}
+.fb .tag{display:block;font-family:var(--px);font-size:10px;line-height:1.5;margin-bottom:6px}
+.fb.ok{background:var(--ok)}.fb.hint{background:var(--warn)}.fb.show{background:var(--info)}
+.fb p{margin:0 0 6px}.fb p:last-child{margin:0}
+.fb .m{font-size:1.12em}
+.log{margin:14px 3px 0;padding:0;list-style:none;font:500 16px/1.45 var(--txt)}
+.log li{padding:6px 8px;margin:0 0 6px;background:var(--panel);box-shadow:inset 3px 0 0 #3ea72a}
+.log li.w{box-shadow:inset 3px 0 0 #d99a1d}
+.field{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin:14px 3px 4px}
+.field input{flex:1 1 120px;min-width:0;min-height:56px;font:700 26px var(--txt);text-align:center;padding:6px 10px;background:#fff;color:#111;border:0;border-radius:0;
+  box-shadow:inset 4px 4px 0 #555,inset -4px -4px 0 #eee,0 0 0 3px #111}
+.field input:focus{outline:4px solid #1d4ed8;outline-offset:4px}
+.field .u{align-self:center;font:700 26px var(--txt)}
+.steplab{font-family:var(--px);font-size:10px;line-height:1.5;margin:14px 3px 6px}
+.qtext{font:600 20px/1.45 var(--txt);margin:2px 3px 0}
+
+/* ---------- фишки для режима 3 ---------- */
+.tray{display:flex;gap:10px;flex-wrap:wrap;margin:12px 3px 4px;min-height:56px;align-items:center}
+.chip{font:700 24px var(--txt);padding:10px 16px;min-height:56px;background:#fff7d6;color:#111;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;
+  box-shadow:inset 3px 3px 0 #fff,inset -3px -3px 0 #b49a4b,0 0 0 3px #111}
+.chip.arm{background:#ffd54a;box-shadow:inset 3px 3px 0 #fff3b8,inset -3px -3px 0 #a47d00,0 0 0 3px #111,0 0 0 6px #1d4ed8}
+.ghost{position:fixed;z-index:60;pointer-events:none;transform:translate(-50%,-50%)}
+
+/* ---------- XP и счётчики ---------- */
+.xp{display:flex;gap:3px;background:#111;padding:3px;margin:6px 0 4px}
+.xp i{flex:1;height:16px;background:#35523a;display:block}
+.xp i.on{background:var(--xp);box-shadow:inset 0 4px 0 #a6f58b,inset 0 -4px 0 #2b8a17}
+.xpl{display:flex;justify-content:space-between;gap:8px;font-family:var(--px);font-size:9px;line-height:1.6}
+.cnt{font-family:var(--px);font-size:9px;line-height:1.7}
+.cnt b{font-weight:400;background:var(--panel);padding:2px 6px;box-shadow:inset 0 0 0 2px #111}
+
+/* ---------- главная: шахты ---------- */
+.mine{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;margin:0 0 14px;min-height:76px}
+.mine .dep{font-family:var(--px);font-size:10px;line-height:1.6;display:block}
+.mine .nm{font-family:var(--px);font-size:12px;line-height:1.6;display:block;margin:2px 0 4px}
+.mine .ds{font:500 15px/1.35 var(--txt);display:block}
+.mine .ic{flex:none;width:44px;height:44px;display:grid;place-items:center}
+.mine .ic img{width:40px;height:40px}
+.mine .st{flex:none;font-family:var(--px);font-size:9px;text-align:right;line-height:1.7}
+
+/* ---------- хотбар ---------- */
+#hotbar{position:fixed;left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;display:flex;background:#111;padding:3px;gap:2px;
+  --s:min(48px,calc((100vw - 22px)/9))}
+.hb{position:relative;width:var(--s);height:var(--s);background:#8b8b8b;display:grid;place-items:center;
+  box-shadow:inset 3px 3px 0 #373737,inset -3px -3px 0 #fff}
+.hb img{width:68%;height:68%;display:block}
+.hb b{position:absolute;right:2px;bottom:0;font-family:var(--px);font-weight:400;font-size:8px;color:#fff;text-shadow:1px 1px 0 #000}
+.hb.new{animation:hbpop .9s steps(6) 1}
+@keyframes hbpop{0%,100%{background:#8b8b8b}30%,70%{background:#ffe36b}}
+#toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:40;display:none;align-items:center;gap:12px;max-width:calc(100vw - 24px);
+  background:var(--win);padding:12px 16px;font-family:var(--px);font-size:11px;line-height:1.6;box-shadow:inset 3px 3px 0 var(--win-hi),inset -3px -3px 0 var(--win-lo),0 0 0 3px #111}
+#toast.on{display:flex;animation:toastin .5s steps(5) 1}
+#toast img{width:40px;height:40px}
+@keyframes toastin{from{transform:translate(-50%,-24px)}to{transform:translate(-50%,0)}}
+
+/* ---------- страница учителя ---------- */
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 12px;padding:10px;background:var(--panel);box-shadow:inset 3px 3px 0 var(--win-lo),inset -3px -3px 0 var(--win-hi)}
+.srow .nm{grid-column:1/-1;font:700 17px/1.3 var(--txt)}
+.srow .c{font:500 14px/1.3 var(--txt)}
+.srow .c b{display:block;font:700 22px/1.2 var(--txt)}
+.bar{height:12px;background:#9d9d9d;box-shadow:inset 0 0 0 2px #111;position:relative;grid-column:1/-1}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#e0a02a}
+.err li{margin:0 0 8px}
+.err .meter{display:block;height:10px;background:#e0a02a;margin-top:3px}
+pre.rep{margin:0;padding:10px;background:#1b1b1b;color:#dfffd0;font:13px/1.45 'Consolas','Courier New',monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+noscript{display:block;padding:20px;background:#fff;font:18px var(--txt)}
+</style>
+</head>
+<body>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="px-a" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ffe27a"/><rect width="4" height="4" fill="#f2b705"/><rect x="4" y="4" width="4" height="4" fill="#f2b705"/></pattern>
+    <pattern id="px-b" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#8be0f7"/><rect width="8" height="3" fill="#1d8fb8"/></pattern>
+    <pattern id="px-ok" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#b9f2a0"/><rect width="4" height="4" fill="#4cc22b"/><rect x="4" y="4" width="4" height="4" fill="#4cc22b"/></pattern>
+    <pattern id="px-bad" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ffd9a0"/><rect width="4" height="4" fill="#f0a030"/><rect x="4" y="4" width="4" height="4" fill="#f0a030"/></pattern>
+    <pattern id="px-sel" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#dcd0ff"/><rect width="4" height="4" fill="#9a82f0"/><rect x="4" y="4" width="4" height="4" fill="#9a82f0"/></pattern>
+  </defs>
+</svg>
+<div id="world" aria-hidden="true">
+  <div class="sky"><div class="stars" id="stars"></div><img class="orb" id="orb" alt=""><img class="cloud c1" id="cl1" alt=""><img class="cloud c2" id="cl2" alt=""><img class="cloud c3" id="cl3" alt=""></div>
+  <div class="ground" id="ground"></div>
+  <div class="deep" id="deep"></div>
+</div>
+<header class="top">
+  <button class="logo" id="logo" type="button" aria-label="На главную">ШАХТА УГЛОВ<small>СМЕЖНЫЕ И ВЕРТИКАЛЬНЫЕ</small></button>
+  <div class="tools">
+    <button class="btn ibtn" id="bSound" type="button" aria-label="Звук" title="Звук"><img alt=""></button>
+    <button class="btn ibtn" id="bTheme" type="button" aria-label="Тема" title="День / ночь"><img alt=""></button>
+    <button class="btn ibtn" id="bTeacher" type="button" aria-label="Для учителя" title="Для учителя"><img alt=""></button>
+  </div>
+</header>
+<main class="wrap" id="main"></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="hotbar" aria-label="Добытые блоки"></div>
+<noscript>Для работы тренажёра нужен JavaScript.</noscript>
+<script>
+'use strict';
+/* =====================================================================
+   ШАХТА УГЛОВ — тренажёр «Смежные и вертикальные углы», 7 класс.
+   Один файл, без зависимостей. Логика (генераторы, проверки) отделена
+   от интерфейса: см. разделы 1–7 (чистая логика) и 8+ (интерфейс).
+   ===================================================================== */
+
+/* ---------- 1. утилиты, генератор случайных чисел ---------- */
+let _rng = Math.random;
+function setRng(f){ _rng = f || Math.random; }
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rnd = () => _rng();
+const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));          // целое от a до b включительно
+const pick = arr => arr[Math.floor(rnd() * arr.length)];
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const mod360 = x => ((x % 360) + 360) % 360;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LETTERS = 'ABCDEFGHKLMNPQRST'.split('');                     // без O (это вершина), I и J
+
+/* ---------- 2. режимы, названия типов задач ---------- */
+const NEED = 8, ROUND = 10;                                         // 8 верных из 10 — следующая шахта открыта
+const MODES = [null,
+  {id:1, name:'Найди угол',          desc:'Угол по трём буквам на чертеже'},
+  {id:2, name:'Какие это углы?',     desc:'Смежные, вертикальные или ни то ни другое'},
+  {id:3, name:'Перенеси условие',    desc:'Условие из учебника → числа на чертеже'},
+  {id:4, name:'Реши по шагам',       desc:'Задача в 2–3 шага с вопросами'},
+  {id:5, name:'Как в учебнике',      desc:'Задача целиком, только ответ'}
+];
+const TYPE_TITLES = {};      // ключ типа задачи -> человекочитаемое название (дополняется ниже)
+const TRAP_TITLES = {};      // ключ типичной ошибки -> описание
+
+/* ---------- 3. сохранение прогресса (localStorage — необязателен) ---------- */
+const LS_KEY = 'shakhta-uglov-v1';
+function newModeState(){ return {self:0, hint:0, shown:0, rounds:0, passed:false, round:{n:0, ok:0, miss:0}}; }
+function defState(){
+  return {v:1, sound:false, theme:null, allOpen:false, selfTotal:0, mined:0,
+          modes:{1:newModeState(), 2:newModeState(), 3:newModeState(), 4:newModeState(), 5:newModeState()},
+          types:{}, traps:{}};
+}
+let S = defState();
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const o = JSON.parse(raw);
+    if(!o || o.v !== 1) return;
+    const d = defState();
+    S = Object.assign(d, o);
+    for(let m = 1; m <= 5; m++) S.modes[m] = Object.assign(newModeState(), (o.modes || {})[m] || {}, {round:Object.assign({n:0, ok:0, miss:0}, ((o.modes || {})[m] || {}).round || {})});
+    S.types = o.types || {}; S.traps = o.traps || {};
+  }catch(e){ /* без localStorage всё работает, просто прогресс не сохранится */ }
+}
+function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+function resetState(){ S = defState(); saveState(); }
+const isOpen = m => m === 1 || S.allOpen || !!S.modes[m - 1].passed;
+
+/* ---------- 4. учёт результатов ---------- */
+function statOf(type){ return S.types[type] || (S.types[type] = {n:0, self:0, hint:0, shown:0, err:0}); }
+function noteTrap(key){ if(!key) return; S.traps[key] = (S.traps[key] || 0) + 1; }
+/* outcome: 'self' (сам, с первой попытки) | 'hint' (верно после подсказки) | 'shown' (показали решение) */
+function recordTask(mode, type, outcome, errs){
+  const m = S.modes[mode], t = statOf(type), r = m.round;
+  m[outcome]++; t.n++; t[outcome]++; t.err += errs;
+  r.n++; if(outcome === 'shown') r.miss++; else r.ok++;
+  let mined = 0;
+  if(outcome === 'self'){ S.selfTotal++; if(S.selfTotal % 5 === 0){ S.mined++; mined = S.mined; } }
+  let verdict = null;
+  if(r.ok >= NEED){ verdict = 'win'; m.passed = true; m.rounds++; }
+  else if(r.miss > ROUND - NEED){ verdict = 'lose'; m.rounds++; }
+  saveState();
+  return {mined, verdict};
+}
+function newRound(mode){ S.modes[mode].round = {n:0, ok:0, miss:0}; saveState(); }
+const ORES = ['coal', 'iron', 'gold', 'diamond'];
+const ORE_NAMES = {coal:'УГОЛЬ', iron:'ЖЕЛЕЗО', gold:'ЗОЛОТО', diamond:'АЛМАЗ'};
+/* блок №k (k = 1, 2, …) лежит в ячейке (k-1) % 9; в ячейке i всегда один и тот же материал */
+function hotbarCounts(){
+  const out = [];
+  for(let i = 0; i < 9; i++) out.push(S.mined > i ? Math.floor((S.mined - 1 - i) / 9) + 1 : 0);
+  return out;
+}
+const oreOfSlot = i => ORES[i % 4];
+
+/* ---------- 5. геометрия: лучи из точки O, углы — целые градусы ---------- */
+/* Луч задаётся углом (в градусах, против часовой стрелки от оси «вправо»).
+   Угол ∠XOY — это пара лучей {from, to}: от луча from против часовой к лучу to. */
+function makeFigure(opts){
+  const raw = [];
+  opts.lines.forEach((d, k) => { raw.push({ang:mod360(d), line:k}); raw.push({ang:mod360(d + 180), line:k}); });
+  (opts.free || []).forEach(d => raw.push({ang:mod360(d), line:-1}));
+  raw.sort((a, b) => a.ang - b.ang);
+  const lets = shuffle(LETTERS).slice(0, raw.length);
+  const rays = raw.map((r, i) => ({ang:r.ang, line:r.line, letter:lets[i], i}));
+  const n = rays.length;
+  const sec = rays.map((r, i) => {
+    const nx = rays[(i + 1) % n];
+    return {i, from:i, to:(i + 1) % n, a0:r.ang, size:mod360(nx.ang - r.ang) || 360};
+  });
+  return {rays, n, sec, nLines:opts.lines.length, nFree:(opts.free || []).length};
+}
+/* две или три прямые через O; все углы между соседними лучами — от 22° до 158° */
+function lineFigure(nl, rot, alpha){
+  if(rot == null) rot = ri(0, 359);
+  let dirs;
+  if(nl === 2){ const a = alpha || ri(22, 158); dirs = [rot, rot + a]; }
+  else{
+    let a, b, c;
+    do{ a = ri(22, 110); b = ri(22, 110); c = 180 - a - b; }while(c < 22);
+    dirs = [rot, rot + a, rot + a + b];
+  }
+  return makeFigure({lines:dirs});
+}
+/* прямая и один луч из точки на ней: A–O–C на прямой, OB — отдельный луч */
+function lineRayFigure(p){
+  const rot = ri(0, 359);
+  p = p || ri(22, 158);
+  return makeFigure({lines:[rot], free:[rot + p]});
+}
+/* чертёж, в котором разные «классы» углов отличаются хотя бы на 3° и нет прямых углов — чтобы числа не совпадали случайно */
+function distinctFig(nl){
+  for(;;){
+    const fig = lineFigure(nl);
+    const s = fig.sec.slice(0, nl === 2 ? 2 : 3).map(x => x.size);
+    let ok = nl !== 2 || s[0] !== 90;
+    for(let i = 0; i < s.length; i++) for(let j = i + 1; j < s.length; j++) if(Math.abs(s[i] - s[j]) < 3) ok = false;
+    if(nl === 2 && Math.abs(s[0] - 90) < 3) ok = false;
+    if(ok) return fig;
+  }
+}
+const rayAng = (fig, i) => fig.rays[i].ang;
+const angSize = (fig, A) => mod360(rayAng(fig, A.to) - rayAng(fig, A.from));
+const angOfSector = (fig, i) => ({from:i, to:(i + 1) % fig.n});
+function angSectors(fig, A){                       // номера секторов, из которых состоит угол
+  const out = []; let i = A.from;
+  while(i !== A.to){ out.push(i); i = (i + 1) % fig.n; if(out.length > fig.n) break; }
+  return out;
+}
+const angContains = (fig, A, deg) => mod360(deg - rayAng(fig, A.from)) < angSize(fig, A);
+const oppRay = (fig, i) => fig.rays.findIndex(r => r.ang === mod360(fig.rays[i].ang + 180));
+const vertOf = (fig, A) => ({from:oppRay(fig, A.from), to:oppRay(fig, A.to)});
+const sameAngle = (A, B) => A.from === B.from && A.to === B.to;
+/* Главная функция-«судья»: смежные / вертикальные / никакие — считаем по градусам лучей. */
+function relation(fig, A, B){
+  const a0 = rayAng(fig, A.from), a1 = rayAng(fig, A.to), b0 = rayAng(fig, B.from), b1 = rayAng(fig, B.to);
+  if(angSize(fig, A) >= 180 || angSize(fig, B) >= 180) return 'none';
+  if(mod360(a0 + 180) === b0 && mod360(a1 + 180) === b1) return 'vert';
+  if(a1 === b0 && mod360(a0 + 180) === b1) return 'adj';      // A, затем B: общий луч OB, внешние лучи — продолжения друг друга
+  if(b1 === a0 && mod360(b0 + 180) === a1) return 'adj';
+  return 'none';
+}
+const share = (fig, A, B) => A.from === B.from || A.from === B.to || A.to === B.from || A.to === B.to;
+/* запись угла по трём буквам: вершина O всегда средняя */
+function angText(fig, A, rev){
+  const x = fig.rays[A.from].letter, y = fig.rays[A.to].letter;
+  return rev ? '∠' + y + 'O' + x : '∠' + x + 'O' + y;
+}
+/* нумерация секторов 1..n против часовой, начиная с сектора start (для двух прямых) */
+function numberSectors(fig, start){ const num = []; for(let j = 0; j < fig.n; j++) num[(start + j) % fig.n] = j + 1; return num; }
+const sectorOfNum = (num, k) => num.indexOf(k);
+
+/* ---------- 6. рисование чертежа (SVG строкой) ---------- */
+const CX = 180, CY = 180, RAY = 142, FILL = 128, LETR = 164;
+const P = (r, deg) => { const t = deg * Math.PI / 180; return [CX + r * Math.cos(t), CY - r * Math.sin(t)]; };
+const f1 = x => Math.round(x * 10) / 10;
+const wedge = (a0, size, r) => { const p = P(r, a0), q = P(r, a0 + size); return `M${CX} ${CY}L${f1(p[0])} ${f1(p[1])}A${r} ${r} 0 ${size > 180 ? 1 : 0} 0 ${f1(q[0])} ${f1(q[1])}Z`; };
+const arcPath = (a0, size, r) => { const p = P(r, a0), q = P(r, a0 + size); return `M${f1(p[0])} ${f1(p[1])}A${r} ${r} 0 ${size > 180 ? 1 : 0} 0 ${f1(q[0])} ${f1(q[1])}`; };
+const sinHalf = size => Math.sin(Math.min(size, 170) * Math.PI / 360);
+const valR = size => clamp(30 / (2 * sinHalf(size)) + 30, 76, 114);       // куда ставить число внутри угла
+const numR = size => clamp(14 / (2 * sinHalf(size)) + 26, 40, 62);        // куда ставить номер угла
+
+/* o.fills: [{A, pat}]  заливка угла (pat: a, b, ok, bad, sel)
+   o.arcs: [{A, r, color}]  дуги
+   o.rayEm: [индексы лучей]  выделенные лучи
+   o.labels: [{deg, r, text, cls, box:[w,h], fill}]  подписи в углах
+   o.letters: показывать буквы (по умолчанию да)
+   o.extra: готовый SVG-код поверх чертежа */
+function drawFigure(fig, o){
+  o = o || {};
+  let s = `<svg viewBox="0 0 360 360" role="img" aria-label="${esc(o.aria || 'Чертёж: лучи из точки O')}" style="overflow:visible"${o.attrs ? ' ' + o.attrs : ''}>`;
+  (o.fills || []).forEach(f => {
+    const a0 = rayAng(fig, f.A.from), size = angSize(fig, f.A);
+    s += `<path d="${wedge(a0, size, FILL)}" fill="url(#px-${f.pat})" shape-rendering="crispEdges"/>`;
+    s += `<path d="${arcPath(a0, size, FILL)}" fill="none" stroke="#222" stroke-width="2" shape-rendering="crispEdges"/>`;
+  });
+  (o.rayEm || []).forEach(i => { const p = P(RAY, rayAng(fig, i)); s += `<line class="rayem pulse" x1="${CX}" y1="${CY}" x2="${f1(p[0])}" y2="${f1(p[1])}"/>`; });
+  fig.rays.forEach(r => {
+    const p = P(RAY, r.ang);
+    s += `<line x1="${CX}" y1="${CY}" x2="${f1(p[0])}" y2="${f1(p[1])}" stroke="#161616" stroke-width="3.5" stroke-linecap="square"/>`;
+    s += `<rect x="${f1(p[0] - 4.5)}" y="${f1(p[1] - 4.5)}" width="9" height="9" fill="#161616"/>`;
+  });
+  (o.arcs || []).forEach(a => {
+    s += `<path d="${arcPath(rayAng(fig, a.A.from), angSize(fig, a.A), a.r)}" fill="none" stroke="${a.color || '#161616'}" stroke-width="3.5" shape-rendering="crispEdges"/>`;
+  });
+  s += `<rect x="${CX - 4}" y="${CY - 4}" width="8" height="8" fill="#161616"/>`;
+  // буква O — в самом широком секторе, чтобы не мешать подписям
+  const wide = fig.sec.filter(x => x.size <= 180).sort((a, b) => b.size - a.size)[0] || fig.sec[0];
+  const op = P(wide.size >= 100 ? 15 : 19, wide.a0 + wide.size / 2);
+  s += `<text class="lt o" x="${f1(op[0])}" y="${f1(op[1])}" text-anchor="middle" dy=".35em">O</text>`;
+  (o.labels || []).forEach(L => {
+    const p = P(L.r, L.deg), x = f1(p[0]), y = f1(p[1]);
+    if(L.box) s += `<rect x="${f1(x - L.box[0] / 2)}" y="${f1(y - L.box[1] / 2)}" width="${L.box[0]}" height="${L.box[1]}" fill="${L.fill || '#fff'}" stroke="#111" stroke-width="2" shape-rendering="crispEdges"/>`;
+    s += `<text class="${L.cls || 'val'}" x="${x}" y="${y}" dy=".35em">${esc(L.text)}</text>`;
+  });
+  if(o.letters !== false){
+    fig.rays.forEach(r => {
+      const p = P(LETR, r.ang);
+      s += `<text class="lt" x="${f1(p[0])}" y="${f1(p[1])}" text-anchor="middle" dy=".35em">${r.letter}</text>`;
+    });
+  }
+  s += (o.extra || '') + '</svg>';
+  return s;
+}
+/* определить, в какой сектор попал палец / курсор (координаты в системе viewBox 360×360) */
+function sectorAtPoint(fig, x, y){
+  const dx = x - CX, dy = CY - y;
+  if(Math.hypot(dx, dy) < 14) return -1;
+  const t = mod360(Math.atan2(dy, dx) * 180 / Math.PI);
+  for(const s of fig.sec) if(s.size <= 180 && mod360(t - s.a0) < s.size) return s.i;
+  return -1;
+}
+const pointAngle = (x, y) => mod360(Math.atan2(CY - y, x - CX) * 180 / Math.PI);
+
+/* ---------- текстовые помощники ---------- */
+/* запись угла в тексте: вершина в середине, шрифт с засечками */
+const nm = str => `<span class="m">${esc(str).replace('∠', '<span class="ang">∠</span>')}</span>`;
+const nn = k => `<span class="m n"><span class="ang">∠</span>${k}</span>`;      // ∠1
+const deg = v => v + '°';
+
+/* ---------- 7. генераторы задач ---------- */
+Object.assign(TYPE_TITLES, {
+  'm1.find.2':'Найти ∠ по трём буквам (две прямые)',
+  'm1.find.3':'Найти ∠ по трём буквам (три прямые)',
+  'm1.find.c':'Найти ∠ по трём буквам: угол из двух частей',
+  'm1.name.2':'Выбрать запись выделенного угла (две прямые)',
+  'm1.name.3':'Выбрать запись выделенного угла (три прямые)',
+  'm1.name.c':'Выбрать запись угла из двух частей',
+  'm2.adj':'Узнать смежные углы',
+  'm2.vert':'Узнать вертикальные углы',
+  'm2.shared3':'Ловушка: общая сторона есть, но лучи не на одной прямой',
+  'm2.far':'Ловушка: общей стороны нет, углы «рядом»',
+  'm2.near180':'Ловушка: сумма почти 180°, но не 180°',
+  'm2.numadj':'Смежные по сумме 180° (числа на чертеже)',
+  'm2.scale':'Ловушка: «рисунку не верь»'
+});
+Object.assign(TRAP_TITLES, {
+  vertexMid:'В записи угла вершину поставил не в середину',
+  neighbor:'Перепутал угол с соседним (общий луч, второй другой)',
+  vertical:'Выбрал вертикальный («напротив») вместо нужного',
+  wider:'Захватил лишний сектор в составном угле',
+  adjNoLine:'Назвал смежными углы, у которых лучи не на одной прямой',
+  vertCommon:'Назвал вертикальными углы с общей стороной',
+  missAdj:'Не узнал смежные углы',
+  missVert:'Не узнал вертикальные углы',
+  nearSum:'Не проверил сумму: 180° или нет'
+});
+
+/* ===== режим 1: «Найди угол» ===== */
+const nameKey = (mid, a, b) => mid + '|' + [a, b].sort().join('');
+function nameOptions(fig, A){
+  const L = k => fig.rays[k].letter, n = fig.n;
+  const x = A.from, y = A.to, size = angSize(fig, A);
+  const opts = [], seen = new Set();
+  const add = (kind, text, key) => { if(seen.has(key)) return false; seen.add(key); opts.push({kind, text}); return true; };
+  add('ok', angText(fig, A, rnd() < 0.5), nameKey('O', L(x), L(y)));
+  // ловушка «вершина не в середине»
+  const mid = rnd() < 0.5 ? x : y, other = mid === x ? y : x;
+  const offText = (m, o) => rnd() < 0.5 ? `∠O${L(m)}${L(o)}` : `∠${L(o)}${L(m)}O`;
+  add('vertexMid', offText(mid, other), nameKey(L(mid), 'O', L(other)));
+  // соседние, вертикальный, «лишний сектор»
+  const nbNext = {from:y, to:(y + 1) % n}, nbPrev = {from:(x - 1 + n) % n, to:x};
+  const cands = [['neighbor', nbNext], ['neighbor', nbPrev], ['vertical', vertOf(fig, A)]];
+  const wide = {from:x, to:(y + 1) % n};
+  if(angSize(fig, wide) < 180 && angSize(fig, wide) > size) cands.push(['wider', wide]);
+  const sh = shuffle(cands);
+  const nb = sh.find(c => c[0] === 'neighbor');                         // хотя бы один соседний — самая частая ошибка
+  const rest = sh.filter(c => c !== nb);
+  for(const c of [nb].concat(rest)){
+    if(opts.length >= 4) break;
+    add(c[0], angText(fig, c[1], rnd() < 0.5), nameKey('O', L(c[1].from), L(c[1].to)));
+  }
+  if(opts.length < 4) add('vertexMid', offText(other, mid), nameKey(L(other), 'O', L(mid)));
+  const order = shuffle(opts);
+  return {list:order, correct:order.findIndex(o => o.kind === 'ok')};
+}
+function gen1(){
+  const variant = rnd() < 0.55 ? 'find' : 'name';
+  const nl = rnd() < 0.5 ? 2 : 3;
+  const fig = lineFigure(nl);
+  const span = (nl === 3 && rnd() < 0.4) ? 2 : 1;
+  const from = ri(0, fig.n - 1);
+  const A = {from, to:(from + span) % fig.n};
+  const rev = rnd() < 0.5;
+  const kind = span === 2 ? 'c' : String(nl);
+  const t = {mode:1, variant, type:`m1.${variant}.${kind}`, fig, A, rev, text:angText(fig, A, rev), span};
+  if(variant === 'name') t.opts = nameOptions(fig, A);
+  return t;
+}
+
+/* ===== режим 2: «Какие это углы?» ===== */
+const disjoint = (fig, A, B) => !angSectors(fig, A).some(i => angSectors(fig, B).includes(i));
+function randAng(fig, maxSpan){
+  const from = ri(0, fig.n - 1), span = ri(1, maxSpan);
+  const A = {from, to:(from + span) % fig.n};
+  return angSize(fig, A) < 180 ? A : null;
+}
+function pairSearch(fig, maxSpan, test){
+  for(let k = 0; k < 1500; k++){
+    const A = randAng(fig, maxSpan), B = randAng(fig, maxSpan);
+    if(!A || !B || sameAngle(A, B) || !disjoint(fig, A, B)) continue;
+    if(test(A, B)) return [A, B];
+  }
+  return null;
+}
+/* три луча OA, OB, OC без «прямой»: ∠AOB = a, ∠BOC = b (рисуем a_d и b_d — для «не в масштабе» они другие) */
+function raysFigure(t0, ad, bd){
+  const fig = makeFigure({lines:[], free:[t0, t0 + ad, t0 + ad + bd]});
+  const idx = a => fig.rays.findIndex(r => r.ang === mod360(a));
+  return {fig, A:{from:idx(t0), to:idx(t0 + ad)}, B:{from:idx(t0 + ad), to:idx(t0 + ad + bd)}};
+}
+function gen2(){
+  const r = rnd();
+  const kind = r < 0.2 ? 'adj' : r < 0.4 ? 'vert' : r < 0.56 ? 'shared3' : r < 0.68 ? 'far' : r < 0.88 ? 'near' : 'scale';
+  let fig, A, B, ans, type, nums = null, banner = '';
+  if(kind === 'adj' || kind === 'vert'){
+    const nl = rnd() < 0.5 ? 2 : 3;
+    fig = lineFigure(nl);
+    const pr = pairSearch(fig, nl === 3 && rnd() < 0.5 ? 2 : 1, (a, b) => relation(fig, a, b) === kind);
+    if(!pr) return gen2();
+    [A, B] = pr;
+    ans = kind; type = 'm2.' + kind;
+  }else if(kind === 'shared3'){
+    fig = lineFigure(3);
+    const pr = pairSearch(fig, rnd() < 0.3 ? 2 : 1, (a, b) => relation(fig, a, b) === 'none' && share(fig, a, b)
+      && Math.abs(angSize(fig, a) - angSize(fig, b)) >= 4 && angSize(fig, a) + angSize(fig, b) !== 180);
+    if(!pr) return gen2();
+    [A, B] = pr;
+    ans = 'none'; type = 'm2.shared3';
+  }else if(kind === 'far'){
+    fig = lineFigure(3);
+    const pr = pairSearch(fig, 1, (a, b) => relation(fig, a, b) === 'none' && !share(fig, a, b)
+      && Math.abs(angSize(fig, a) - angSize(fig, b)) >= 4 && angSize(fig, a) + angSize(fig, b) !== 180);
+    if(!pr) return gen2();
+    [A, B] = pr;
+    ans = 'none'; type = 'm2.far';
+  }else if(kind === 'near'){
+    // общий луч есть; внешние лучи почти (или ровно) на одной прямой; числа подписаны на чертеже
+    const exact = rnd() < 0.3, d = exact ? 0 : pick([-1, 1]) * ri(4, 16);
+    const a = ri(40, 140), b = 180 + d - a;
+    const o = raysFigure(ri(0, 359), a, b);
+    fig = o.fig; A = o.A; B = o.B; nums = [a, b];
+    ans = exact ? 'adj' : 'none'; type = exact ? 'm2.numadj' : 'm2.near180';
+  }else{
+    // «рисунку не верь»: нарисовано одно, числа говорят другое
+    const exact = rnd() < 0.4;
+    let a, b;
+    do{ a = ri(40, 140); b = exact ? 180 - a : 180 + pick([-1, 1]) * ri(5, 25) - a; }while(b < 20 || b > 160);      // числа тоже в пределах 20°–160°
+    let ad, bd;
+    if(exact){ do{ ad = ri(50, 100); bd = ri(50, 100); }while(Math.abs(ad + bd - 180) < 25); }
+    else { ad = ri(75, 105); bd = 180 - ad; }
+    const o = raysFigure(ri(0, 359), ad, bd);
+    fig = o.fig; A = o.A; B = o.B; nums = [a, b];
+    ans = exact ? 'adj' : 'none'; type = 'm2.scale';
+    banner = 'РИСУНОК НЕ В МАСШТАБЕ — ВЕРЬ ЧИСЛАМ';
+  }
+  const revA = rnd() < 0.5, revB = rnd() < 0.5;
+  const t = {mode:2, kind, type, fig, A, B, revA, revB, ans, nums, banner, scale:kind === 'scale'};
+  t.nA = angText(fig, A, revA); t.nB = angText(fig, B, revB);
+  t.real = relation(fig, A, B);                          // что на самом деле нарисовано
+  t.why = why2(t);                                       // полный разбор (после второй ошибки)
+  t.whyShort = whyShort2(t);                             // одна строка (после верного ответа)
+  return t;
+}
+function whyShort2(t){
+  const fig = t.fig, L = k => fig.rays[k].letter, ray = k => nm('O' + L(k));
+  const sd = share(fig, t.A, t.B) ? sides(fig, t.A, t.B) : null;
+  if(t.kind === 'adj') return `Смежные: общий луч ${ray(sd.common)}, а ${ray(sd.outA)} и ${ray(sd.outB)} лежат на одной прямой (сумма 180°).`;
+  if(t.kind === 'vert') return `Вертикальные: стороны одного угла продолжают стороны другого, поэтому углы равны.`;
+  if(t.kind === 'shared3') return `Общий луч ${ray(sd.common)} есть, но ${ray(sd.outA)} и ${ray(sd.outB)} не на одной прямой — не смежные.`;
+  if(t.kind === 'far') return `Общей стороны нет, и стороны не продолжают друг друга — ни смежные, ни вертикальные.`;
+  const s = t.nums[0] + t.nums[1];
+  return t.ans === 'adj' ? `${t.nums[0]}° + ${t.nums[1]}° = 180°, значит, лучи на одной прямой — углы смежные.`
+    : `${t.nums[0]}° + ${t.nums[1]}° = ${s}°, а у смежных ровно 180° — углы не смежные.`;
+}
+/* стороны пары углов: общий луч и два внешних */
+function sides(fig, A, B){
+  const a = [A.from, A.to], b = [B.from, B.to];
+  const common = a.filter(i => b.includes(i));
+  return {common:common[0], outA:a.find(i => !b.includes(i)), outB:b.find(i => !a.includes(i))};
+}
+function why2(t){
+  const fig = t.fig, L = k => fig.rays[k].letter, na = nm(t.nA), nb = nm(t.nB);
+  const sd = share(fig, t.A, t.B) ? sides(fig, t.A, t.B) : null;
+  const ray = k => nm('O' + L(k));
+  if(t.kind === 'adj')
+    return `Смежные: у ${na} и ${nb} общая сторона ${ray(sd.common)}, а две другие — ${ray(sd.outA)} и ${ray(sd.outB)} — лежат на одной прямой. Вместе они дают 180°.`;
+  if(t.kind === 'vert')
+    return `Вертикальные: ${ray(t.A.from)} продолжается в ${ray(oppRay(fig, t.A.from))}, а ${ray(t.A.to)} — в ${ray(oppRay(fig, t.A.to))}: стороны одного угла продолжают стороны другого. Вертикальные углы равны.`;
+  if(t.kind === 'shared3')
+    return `Общая сторона ${ray(sd.common)} есть, но ${ray(sd.outA)} и ${ray(sd.outB)} не лежат на одной прямой (это лучи разных прямых), поэтому углы не смежные. Вертикальные тоже нет: у вертикальных общей стороны не бывает.`;
+  if(t.kind === 'far')
+    return `Общей стороны у ${na} и ${nb} нет, и стороны одного не продолжают стороны другого. Это не смежные и не вертикальные углы.`;
+  const sd2 = sides(fig, t.A, t.B), s = t.nums[0] + t.nums[1];
+  if(t.ans === 'adj')
+    return `${t.nums[0]}° + ${t.nums[1]}° = 180°: лучи ${ray(sd2.outA)} и ${ray(sd2.outB)} лежат на одной прямой, а общая сторона ${ray(sd2.common)} есть. Значит, углы смежные.`;
+  return `Общая сторона ${ray(sd2.common)} есть, но ${t.nums[0]}° + ${t.nums[1]}° = ${s}°, а у смежных углов сумма ровно 180°. Лучи ${ray(sd2.outA)} и ${ray(sd2.outB)} не на одной прямой, поэтому углы не смежные. Вертикальными они быть не могут: у вертикальных углов общей стороны нет.`;
+}
+/* подсказка на один шаг после первой ошибки: {html, rays:[индексы лучей для подсветки], trap} */
+function hint2(t, chosen){
+  const fig = t.fig, L = k => fig.rays[k].letter, ray = k => nm('O' + L(k));
+  const sd = share(fig, t.A, t.B) ? sides(fig, t.A, t.B) : null;
+  const ans = t.ans;
+  if(ans === 'adj' && chosen === 'vert')
+    return {html:`У смежных углов есть общая сторона — общий луч ${ray(sd.common)}. У вертикальных общего луча нет. Есть ли здесь общий луч?`, rays:[sd.common], trap:'missAdj'};
+  if(ans === 'adj')
+    return {html:`Найди общий луч ${ray(sd.common)}. Теперь посмотри: лежат ли лучи ${ray(sd.outA)} и ${ray(sd.outB)} на одной прямой? Если да — это смежные углы.`, rays:[sd.outA, sd.outB], trap:'missAdj'};
+  if(ans === 'vert' && chosen === 'adj')
+    return {html:`Есть ли у этих углов общая сторона? Общего луча нет. Посмотри на лучи: ${ray(t.A.from)} продолжается в ${ray(oppRay(fig, t.A.from))}. Так выглядят вертикальные углы.`, rays:[t.A.from, oppRay(fig, t.A.from)], trap:'missVert'};
+  if(ans === 'vert')
+    return {html:`Продолжи мысленно стороны: ${ray(t.A.from)} продолжается в ${ray(oppRay(fig, t.A.from))}, а ${ray(t.A.to)} — в ${ray(oppRay(fig, t.A.to))}. Стороны одного угла продолжают стороны другого. Как называются такие углы?`, rays:[t.A.from, oppRay(fig, t.A.from), t.A.to, oppRay(fig, t.A.to)], trap:'missVert'};
+  // правильный ответ «ни то ни другое»
+  if(chosen === 'adj'){
+    if(!sd) return {html:`У смежных углов обязательно есть общая сторона — общий луч. Есть ли он у ${nm(t.nA)} и ${nm(t.nB)}? Посмотри на буквы у сторон.`, rays:[t.A.from, t.A.to, t.B.from, t.B.to], trap:'adjNoLine'};
+    if(t.nums){
+      const sd2 = sides(fig, t.A, t.B);
+      return {html:`Проверь по числам: ${t.nums[0]}° + ${t.nums[1]}° = ? У смежных углов сумма ровно 180°, и лучи ${ray(sd2.outA)} и ${ray(sd2.outB)} лежат на одной прямой.`, rays:[sd2.outA, sd2.outB], trap:'nearSum'};
+    }
+    return {html:`Общий луч ${ray(sd.common)} есть. Но лежат ли лучи ${ray(sd.outA)} и ${ray(sd.outB)} на одной прямой? Проведи через ${ray(sd.outA)} прямую: пройдёт ли она по ${ray(sd.outB)}?`, rays:[sd.outA, sd.outB], trap:'adjNoLine'};
+  }
+  if(sd) return {html:`У вертикальных углов нет общей стороны, а здесь общий луч ${ray(sd.common)} есть. Но и для смежных нужно, чтобы два других луча лежали на одной прямой. Проверь.`, rays:[sd.common], trap:'vertCommon'};
+  return {html:`Продолжи мысленно ${ray(t.A.from)} за точку O. Попадёшь ли на сторону второго угла? И есть ли у углов общий луч?`, rays:[t.A.from, t.A.to, t.B.from, t.B.to], trap:'vertCommon'};
+}
+
+/* ===== общие помощники для режимов 3–5 ===== */
+const plural = (n, f) => { const a = n % 100, b = n % 10; return a > 10 && a < 20 ? f[2] : b === 1 ? f[0] : b >= 2 && b <= 4 ? f[1] : f[2]; };
+const razaWord = k => plural(k, ['раз', 'раза', 'раз']);
+/* имена секторов: ∠1…∠4 (для двух прямых) или ∠AOB (по трём буквам) */
+function sectorNames(fig, naming){
+  const num = naming === 'num' ? numberSectors(fig, ri(0, fig.n - 1)) : null;
+  const rev = fig.sec.map(() => rnd() < 0.5);
+  return {
+    num,
+    html:fig.sec.map((s, i) => naming === 'num' ? nn(num[i]) : nm(angText(fig, angOfSector(fig, i), rev[i]))),
+    plain:fig.sec.map((s, i) => naming === 'num' ? '∠' + num[i] : angText(fig, angOfSector(fig, i), rev[i]))
+  };
+}
+const sizeOfSec = (fig, i) => fig.sec[i].size;
+
+/* ===== режим 3: «Перенеси условие на рисунок» ===== */
+Object.assign(TYPE_TITLES, {
+  'm3.vals.num':'Перенос чисел на чертёж: углы ∠1…∠4',
+  'm3.vals.let':'Перенос чисел на чертёж: углы по трём буквам',
+  'm3.pair.vsum':'Условие «сумма двух углов»: найти эти углы на чертеже',
+  'm3.pair.adj':'Условие «один угол больше другого»: найти эти углы на чертеже'
+});
+Object.assign(TRAP_TITLES, {
+  eqAdj:'Записал то же число в смежный угол (смежные не равны)',
+  skipVert:'Не заметил вертикальный угол, равный известному',
+  wrongPlace:'Поставил число не в тот угол',
+  extraNum:'Заполнил угол, для которого числа в условии нет',
+  pickWrong:'Выбрал на чертеже не те углы из условия',
+  relPick:'Не понял, какое правило связывает названные углы',
+  missGiven:'Не перенёс на чертёж все числа из условия'
+});
+function gen3(){ return rnd() < 0.55 ? gen3vals() : gen3pair(); }
+function gen3vals(){
+  const naming = rnd() < 0.5 ? 'num' : 'let';
+  const nl = naming === 'num' ? 2 : (rnd() < 0.35 ? 2 : 3);
+  const fig = distinctFig(nl), n = fig.n, half = n / 2, nz = sectorNames(fig, naming);
+  let gi;
+  if(nl === 2) gi = rnd() < 0.6 ? [ri(0, 3)] : (() => { const i = ri(0, 3); return [i, (i + pick([1, 3])) % 4]; })();
+  else if(rnd() < 0.3) gi = [ri(0, 5)];
+  else { const i = ri(0, 5); gi = [i, (i + pick([1, 2, 4, 5])) % 6]; }
+  gi = shuffle(gi);
+  const expected = {};
+  gi.forEach(i => { const v = sizeOfSec(fig, i); expected[i] = v; expected[(i + half) % n] = v; });
+  const t = {mode:3, kind:'vals', type:'m3.vals.' + naming, fig, naming, givens:gi, expected, half,
+    chips:Array.from(new Set(gi.map(i => sizeOfSec(fig, i)))),
+    text:gi.map(i => `${nz.html[i]} = ${sizeOfSec(fig, i)}°`).join(', ')};
+  return Object.assign(t, {num:nz.num, nmH:nz.html, nmP:nz.plain});
+}
+function gen3pair(){
+  const naming = rnd() < 0.5 ? 'num' : 'let';
+  const kind = pick(['vsum', 'adiff', 'aktimes']);
+  let alpha = null, k = null;
+  if(kind === 'aktimes'){ k = pick([2, 3, 4, 5, 8]); const x = 180 / (k + 1); alpha = rnd() < 0.5 ? x : 180 - x; }
+  const fig = kind === 'aktimes' ? lineFigure(2, null, alpha) : distinctFig(2);
+  const nz = sectorNames(fig, naming);
+  let i, j, text, rel;
+  if(kind === 'vsum'){
+    i = ri(0, 3); j = (i + 2) % 4; rel = 'vert';
+    text = `${nz.html[i]} + ${nz.html[j]} = ${2 * sizeOfSec(fig, i)}°`;
+  }else{
+    i = ri(0, 3); j = (i + pick([1, 3])) % 4; rel = 'adj';
+    const big = sizeOfSec(fig, i) > sizeOfSec(fig, j) ? i : j, small = big === i ? j : i;
+    i = big; j = small;
+    const d = sizeOfSec(fig, big) - sizeOfSec(fig, small);
+    text = kind === 'adiff' ? pick([`${nz.html[big]} − ${nz.html[small]} = ${d}°`, `${nz.html[big]} на ${d}° больше ${nz.html[small]}`])
+      : `${nz.html[big]} в ${k} ${razaWord(k)} больше ${nz.html[small]}`;
+  }
+  const t = {mode:3, kind:'pair', type:'m3.pair.' + (kind === 'vsum' ? 'vsum' : 'adj'), fig, naming, pair:[i, j], rel, text};
+  return Object.assign(t, {num:nz.num, nmH:nz.html, nmP:nz.plain});
+}
+/* что не так на чертеже в режиме 3 «значения» — для подсказок */
+function check3vals(t, placed){
+  const issues = [];
+  for(let i = 0; i < t.fig.n; i++){
+    const p = placed[i], e = t.expected[i];
+    if(e !== undefined){
+      if(p === undefined) issues.push({kind:t.givens.includes(i) ? 'missGiven' : 'skipVert', i});
+      else if(p !== e) issues.push({kind:'wrongPlace', i, got:p});
+    }else if(p !== undefined) issues.push({kind:'extra', i, got:p});
+  }
+  const order = {wrongPlace:0, extra:1, missGiven:2, skipVert:3};
+  return issues.sort((a, b) => order[a.kind] - order[b.kind]);
+}
+
+/* ===== режимы 4 и 5: задачи в несколько шагов ===== */
+Object.assign(TRAP_TITLES, {
+  rule_eq:'Не вспомнил, что вертикальные углы равны',
+  rule_sum180:'Не вспомнил, что смежные углы дают в сумме 180°',
+  rule_sum360:'Не вспомнил, что четыре угла вокруг точки дают 360°',
+  numWrong:'Ошибся в вычислении или взял не тот угол',
+  layout:'Не понял, как расположены названные углы'
+});
+const STEP_TITLES = {sum2:'Сумма двух углов при пересечении прямых', diff:'Разность смежных углов', ktimes:'Один смежный угол в несколько раз больше другого',
+  sum3:'Сумма трёх углов (полный угол 360°)', three:'Три прямые через одну точку'};
+Object.keys(STEP_TITLES).forEach(k => { TYPE_TITLES['m4.' + k] = 'По шагам: ' + STEP_TITLES[k]; TYPE_TITLES['m5.' + k] = 'Как в учебнике: ' + STEP_TITLES[k]; });
+
+const REL_OPTS = [{id:'adj', label:'СМЕЖНЫЕ'}, {id:'vert', label:'ВЕРТИКАЛЬНЫЕ'}, {id:'none', label:'НИ ТО НИ ДРУГОЕ'}];
+const RULE_OPTS = [{id:'sum180', label:'СУММА УГЛОВ = 180°'}, {id:'eq', label:'УГЛЫ РАВНЫ'}, {id:'sum360', label:'СУММА УГЛОВ = 360°'}];
+/* вопрос «Какие это углы?» — ответ считает relation() по градусам лучей */
+function mkQRel(C, a, b){
+  const fig = C.fig, A = angOfSector(fig, a), B = angOfSector(fig, b), truth = relation(fig, A, B);
+  const probe = {fig, A, B, nA:C.plain(a), nB:C.plain(b), nums:null, ans:truth, kind:truth};
+  return {id:'rel', kind:'choice', ask:`Какие это углы: ${C.html(a)} и ${C.html(b)}?`, opts:REL_OPTS, ans:truth,
+    hint:c => hint2(probe, c), short:whyShort2(probe), full:why2(probe)};
+}
+/* вопрос «Какое правило?» */
+function mkQRule(truth){
+  const H = {
+    eq:{sum180:'Вертикальные углы равны: один можно повернуть так, что он совпадёт с другим. «Вместе 180°» бывает только у смежных.',
+        sum360:'360° — полный оборот вокруг точки. Здесь всего два вертикальных угла. Что про них известно?'},
+    sum180:{eq:'Смежные углы не равны: вместе они образуют развёрнутый угол. Сколько градусов в развёрнутом угле?',
+        sum360:'360° — полный оборот. А смежные углы вместе — только половина оборота, развёрнутый угол.'},
+    sum360:{eq:'Четыре угла вокруг точки O вместе заполняют всё вокруг неё. Сколько градусов в полном обороте?',
+        sum180:'180° — это развёрнутый угол, половина оборота. А четыре угла вокруг точки O занимают целый оборот.'}
+  };
+  const S = {eq:'Вертикальные углы равны.', sum180:'Смежные углы в сумме дают 180°.', sum360:'Четыре угла вокруг точки в сумме дают 360°.'};
+  return {id:'rule', kind:'choice', ask:'Какое правило применим?', opts:RULE_OPTS, ans:truth,
+    hint:c => ({html:H[truth][c], rays:[], trap:'rule_' + truth}), short:S[truth], full:S[truth]};
+}
+function mkQCustom(ask, opts, ans, hints, short){
+  return {id:'layout', kind:'choice', ask, opts, ans, hint:c => ({html:hints[c], rays:[], trap:'layout'}), short, full:short};
+}
+function mkQNum(ask, ans, o){
+  return {id:'num', kind:'num', ask, ans, label:o.label || '', hint:o.hint, wrongs:o.wrongs || [], short:o.short, full:o.full || o.short, place:o.place || []};
+}
+function mkProblem(kind, C, cond, ask, answer, steps, hint5, target, meta){
+  const wrongs = [];
+  const add = w => { if(w.v !== answer && !wrongs.some(x => x.v === w.v)) wrongs.push(w); };
+  steps.forEach(s => s.qs.forEach(q => { if(q.kind === 'num') q.wrongs.forEach(add); }));
+  steps.forEach(s => s.qs.forEach(q => { if(q.kind === 'num' && q.ans !== answer) add({v:q.ans, msg:`${q.ans}° — это ${q.label || 'промежуточный результат'}, а не ответ. Продолжи решение до нужного угла.`}); }));
+  return {mode:4, kind, type:'m4.' + kind, fig:C.fig, naming:C.naming, num:C.num, C, text:`${cond}. ${ask}`, cond, ask, answer, steps, hint5, wrongs, target, meta:meta || {}};
+}
+const mkC = (fig, naming) => {
+  const nz = sectorNames(fig, naming);
+  return {fig, naming, num:nz.num, html:i => nz.html[i], plain:i => nz.plain[i]};
+};
+const stepAngles = (fig, list) => list.map(x => ({A:angOfSector(fig, x[0]), pat:x[1]}));
+
+function genSum2(){
+  const fig = distinctFig(2), C = mkC(fig, 'num'), num = C.num;
+  const sec = k => sectorOfNum(num, k), H = C.html;
+  const pair = rnd() < 0.5 ? [1, 3] : [2, 4], other = pair[0] === 1 ? [2, 4] : [1, 3];
+  const p0 = sec(pair[0]), p1 = sec(pair[1]);
+  const v = sizeOfSec(fig, p0), S = 2 * v;
+  const q = sec(pick(other)), base = sec(pick(pair));
+  const steps = [
+    {angles:stepAngles(fig, [[p0, 'a'], [p1, 'b']]), qs:[mkQRel(C, p0, p1), mkQRule('eq'),
+      mkQNum(`Чему равен ${H(p0)}?`, v, {label:H(p0), hint:`Углы равны, а вместе они ${S}°. Значит, каждый — половина: раздели ${S} на 2.`,
+        wrongs:[{v:S, msg:`${S}° — это сумма двух углов, а нужен один из них. Они равны, поэтому раздели сумму пополам.`},
+                {v:180 - v, msg:`${180 - v}° — это смежный угол. А ${H(p0)} и ${H(p1)} вертикальные: они равны между собой.`}],
+        short:`${H(p0)} = ${H(p1)}, вместе ${S}°, значит ${H(p0)} = ${S}° : 2 = ${v}°.`, place:[{sec:p0, v}, {sec:p1, v}]})]},
+    {angles:stepAngles(fig, [[base, 'a'], [q, 'b']]), qs:[mkQRel(C, base, q), mkQRule('sum180'),
+      mkQNum(`Чему равен ${H(q)}?`, 180 - v, {label:H(q), hint:`Смежные углы дают 180°. Из 180° вычти ${H(base)} — он уже найден (${v}°).`,
+        wrongs:[{v, msg:`${v}° — это ${H(base)}. А ${H(q)} с ним смежный: они не равны, а вместе дают 180°.`}],
+        short:`${H(base)} + ${H(q)} = 180°, значит ${H(q)} = 180° − ${v}° = ${180 - v}°.`, place:[{sec:q, v:180 - v}]})]}
+  ];
+  return mkProblem('sum2', C, `${H(p0)} + ${H(p1)} = ${S}°`, `Найдите ${H(q)}.`, 180 - v, steps,
+    `Сначала посмотри на ${H(p0)} и ${H(p1)}: какие это углы? Если они равны, то сумму можно разделить пополам.`, q, {pair:[p0, p1], S, base, q});
+}
+/* пара смежных углов: x — меньший из них */
+function adjSetup(x){
+  const alpha = rnd() < 0.5 ? x : 180 - x;
+  let fig, naming, i, j;
+  if(rnd() < 0.5){
+    fig = lineRayFigure(alpha); naming = 'let';
+    const idx = fig.sec.filter(s => s.size < 180).map(s => s.i); i = idx[0]; j = idx[1];
+  }else{
+    fig = lineFigure(2, null, alpha); naming = rnd() < 0.5 ? 'num' : 'let';
+    i = ri(0, 3); j = (i + pick([1, 3])) % 4;
+  }
+  const C = mkC(fig, naming);
+  const big = sizeOfSec(fig, i) > sizeOfSec(fig, j) ? i : j;
+  return {C, fig, big, small:big === i ? j : i};
+}
+function adjSumStep(C, big, small){
+  const H = C.html, P = H(big), Q = H(small);
+  return {angles:stepAngles(C.fig, [[big, 'a'], [small, 'b']]), qs:[mkQRel(C, big, small), mkQRule('sum180'),
+    mkQNum(`Чему равна сумма ${P} + ${Q}?`, 180, {label:`сумма ${P} + ${Q}`, hint:'Это смежные углы: вместе они образуют развёрнутый угол. Сколько градусов в нём?',
+      wrongs:[{v:360, msg:'360° — полный оборот. А смежные углы вместе — только развёрнутый угол.'}], short:`${P} + ${Q} = 180°.`})]};
+}
+function genDiff(){
+  const x = ri(22, 85), y = 180 - x, d = y - x;
+  const {C, fig, big, small} = adjSetup(x), H = C.html, P = H(big), Q = H(small), askBig = rnd() < 0.5;
+  const steps = [adjSumStep(C, big, small),
+    {angles:stepAngles(fig, [[big, 'a'], [small, 'b']]), qs:[
+      mkQNum(`Если у большего угла убрать лишние ${d}°, углы станут равными, а вместе будут ${180 - d}°. Чему равен меньший угол ${Q}?`, x,
+        {label:`меньший угол ${Q}`, hint:`Из 180° убери лишние ${d}° — останется два равных угла. Раздели результат на 2.`,
+         wrongs:[{v:y, msg:`${y}° — это больший угол ${P}. Мы ищем меньший, ${Q}.`}, {v:180 - d, msg:`${180 - d}° — это два равных угла вместе. Нужен один из них: раздели пополам.`}],
+         short:`(180° − ${d}°) : 2 = ${x}°, это ${Q}.`, place:[{sec:small, v:x}]})]}];
+  if(askBig) steps.push({angles:stepAngles(fig, [[big, 'a'], [small, 'b']]), qs:[
+    mkQNum(`Чему равен ${P}?`, y, {label:P, hint:`${P} на ${d}° больше, чем ${Q} = ${x}°. Или проще: вместе они дают 180°.`,
+      wrongs:[{v:x, msg:`${x}° — это ${Q}. А ${P} больше него на ${d}°.`}], short:`${P} = ${Q} + ${d}° = ${x}° + ${d}° = ${y}°.`, place:[{sec:big, v:y}]})]});
+  return mkProblem('diff', C, `${P} на ${d}° больше ${Q}`, `Найдите ${askBig ? P : Q}.`, askBig ? y : x, steps,
+    `Эти углы смежные, вместе они 180°. Если один на ${d}° больше, убери лишние ${d}° — останутся два равных угла.`, askBig ? big : small, {big, small, d});
+}
+function genKtimes(){
+  const k = pick([2, 3, 4, 5, 8]), x = 180 / (k + 1), y = k * x;
+  const {C, fig, big, small} = adjSetup(x), H = C.html, P = H(big), Q = H(small), askBig = rnd() < 0.5;
+  const parts = n => `${n} ${plural(n, ['часть', 'части', 'частей'])}`;
+  const steps = [adjSumStep(C, big, small),
+    {angles:stepAngles(fig, [[big, 'a'], [small, 'b']]), qs:[
+      mkQNum(`Пусть ${Q} — одна часть, тогда ${P} — это ${parts(k)}. Всего ${parts(k + 1)} на 180°. Чему равна одна часть, то есть ${Q}?`, x,
+        {label:`меньший угол ${Q}`, hint:`Раздели 180° на ${k + 1} равных частей.`,
+         wrongs:[{v:y, msg:`${y}° — это больший угол ${P} (${parts(k)}). Мы ищем одну часть, ${Q}.`}],
+         short:`180° : ${k + 1} = ${x}°, это ${Q}.`, place:[{sec:small, v:x}]})]}];
+  if(askBig) steps.push({angles:stepAngles(fig, [[big, 'a'], [small, 'b']]), qs:[
+    mkQNum(`Чему равен ${P}?`, y, {label:P, hint:`${P} — это ${parts(k)}: умножь ${x}° на ${k}. Или вычти ${Q} из 180°.`,
+      wrongs:[{v:x, msg:`${x}° — это ${Q}, одна часть. А ${P} состоит из ${parts(k)}.`}], short:`${P} = ${x}° · ${k} = ${y}°.`, place:[{sec:big, v:y}]})]});
+  return mkProblem('ktimes', C, `${P} в ${k} ${razaWord(k)} больше ${Q}`, `Найдите ${askBig ? P : Q}.`, askBig ? y : x, steps,
+    `Смежные углы дают 180°. Если один в ${k} ${razaWord(k)} больше другого, то всего ${parts(k + 1)}: раздели 180° на ${k + 1}.`, askBig ? big : small, {big, small, k});
+}
+function genSum3(){
+  const fig = distinctFig(2), C = mkC(fig, 'num'), num = C.num, sec = k => sectorOfNum(num, k), H = C.html;
+  const wk = ri(1, 4), w = sec(wk), wv = sizeOfSec(fig, w), S = 360 - wv;
+  const three = [1, 2, 3, 4].filter(k => k !== wk), tk = pick(three), t = sec(tk);
+  const rel = relation(fig, angOfSector(fig, w), angOfSector(fig, t)), ans = rel === 'vert' ? wv : 180 - wv;
+  const all4 = [1, 2, 3, 4].map(k => nn(k)).join(', ');
+  const steps = [
+    {angles:three.map(k => ({A:angOfSector(fig, sec(k)), pat:'a'})).concat([{A:angOfSector(fig, w), pat:'b'}]), qs:[
+      mkQCustom(`Как расположены четыре угла ${all4}?`,
+        [{id:'full', label:'ВМЕСТЕ — ПОЛНЫЙ УГОЛ ВОКРУГ ТОЧКИ O'}, {id:'adj', label:'ВСЕ ЧЕТЫРЕ — СМЕЖНЫЕ'}, {id:'vert', label:'ВСЕ ЧЕТЫРЕ — ВЕРТИКАЛЬНЫЕ'}], 'full',
+        {adj:'Смежными бывают только два угла: у них одна общая сторона. А здесь четыре угла вокруг одной точки. Чем они вместе являются?',
+         vert:'Вертикальные углы бывают только парами. А здесь четыре угла вокруг одной точки. Чем они вместе являются?'},
+        'Четыре угла вокруг точки O вместе образуют полный угол.'),
+      mkQRule('sum360'),
+      mkQNum(`Чему равен ${H(w)}?`, wv, {label:H(w), hint:`Четыре угла вместе — 360°. Три из них в сумме ${S}°. Вычти.`,
+        wrongs:[{v:180 - wv, msg:`${180 - wv}° — это угол, смежный с ${H(w)}. А ${H(w)} — недостающий из четырёх: 360° − ${S}°.`}, {v:S, msg:`${S}° — это сумма трёх углов. Нужен четвёртый, ${H(w)}: вычти сумму из 360°.`}],
+        short:`${H(w)} = 360° − ${S}° = ${wv}°.`, place:[{sec:w, v:wv}]})]},
+    {angles:stepAngles(fig, [[w, 'a'], [t, 'b']]), qs:[mkQRel(C, w, t), mkQRule(rel === 'vert' ? 'eq' : 'sum180'),
+      mkQNum(`Чему равен ${H(t)}?`, ans, {label:H(t),
+        hint:rel === 'vert' ? `${H(w)} = ${wv}°, а вертикальные углы равны.` : `${H(w)} = ${wv}°, а смежные дают 180°: вычти.`,
+        wrongs:[rel === 'vert' ? {v:180 - wv, msg:`${180 - wv}° — это смежный угол. А ${H(t)} вертикальный к ${H(w)}: они равны.`} : {v:wv, msg:`${wv}° — это ${H(w)}. А ${H(t)} с ним смежный: они не равны, а дают 180°.`}],
+        short:rel === 'vert' ? `${H(t)} = ${H(w)} = ${wv}°.` : `${H(t)} = 180° − ${wv}° = ${180 - wv}°.`, place:[{sec:t, v:ans}]})]}
+  ];
+  return mkProblem('sum3', C, `${three.map(k => H(sec(k))).join(' + ')} = ${S}°`, `Найдите ${H(t)}.`, ans, steps,
+    `Четыре угла вокруг точки — это 360°. Найди четвёртый угол, а потом посмотри: он смежный или вертикальный к искомому?`, t, {three:three.map(sec), w, S, t});
+}
+function genThree(){
+  const fig = distinctFig(3), C = mkC(fig, 'let'), H = C.html, L = k => fig.rays[k].letter;
+  const r = ri(0, 5), dir = pick([1, -1]), idx = k => ((r + dir * k) % 6 + 6) % 6;
+  const g1 = idx(0), mid = idx(1), tg = idx(2), g2 = (mid + 3) % 6;
+  const a = sizeOfSec(fig, g1), b = sizeOfSec(fig, mid), c = sizeOfSec(fig, tg);
+  const s0 = dir === 1 ? g1 : tg, straight = `${L(s0)}O${L((s0 + 3) % 6)}`;
+  const steps = [
+    {angles:stepAngles(fig, [[g2, 'a'], [mid, 'b']]), qs:[mkQRel(C, g2, mid), mkQRule('eq'),
+      mkQNum(`Чему равен ${H(mid)}?`, b, {label:H(mid), hint:`Вертикальные углы равны: ${H(mid)} равен ${H(g2)}, а он известен по условию.`,
+        wrongs:[{v:180 - b, msg:`${180 - b}° — это смежный угол. А ${H(mid)} вертикальный к ${H(g2)}: они равны.`}],
+        short:`${H(mid)} = ${H(g2)} = ${b}° (вертикальные).`, place:[{sec:mid, v:b}]})]},
+    {angles:stepAngles(fig, [[g1, 'a'], [mid, 'b'], [tg, 'sel']]), qs:[
+      mkQCustom(`Как расположены ${H(g1)}, ${H(mid)} и ${H(tg)}?`,
+        [{id:'straight', label:`ВМЕСТЕ — РАЗВЁРНУТЫЙ УГОЛ ${straight}`}, {id:'full', label:'ВМЕСТЕ — ПОЛНЫЙ УГОЛ ВОКРУГ ТОЧКИ O'}, {id:'vert', label:'ЭТО ВЕРТИКАЛЬНЫЕ УГЛЫ'}], 'straight',
+        {full:`Эти три угла занимают только полоборота: лучи O${L(s0)} и O${L((s0 + 3) % 6)} лежат на одной прямой. Что получится, если сложить три угла между ними?`,
+         vert:'Эти три угла идут подряд и имеют общие стороны: вертикальные углы так не расположены.'},
+        `Три угла подряд заполняют угол ${straight}: лучи O${L(s0)} и O${L((s0 + 3) % 6)} лежат на одной прямой.`),
+      mkQRule('sum180'),
+      mkQNum(`Чему равен ${H(tg)}?`, c, {label:H(tg), hint:`Из 180° вычти и ${H(g1)} (${a}°), и ${H(mid)} (${b}°).`,
+        wrongs:[{v:180 - a, msg:`Ты вычел только один угол. Из 180° нужно вычесть оба: ${a}° и ${b}°.`}, {v:180 - b, msg:`Ты вычел только один угол. Из 180° нужно вычесть оба: ${a}° и ${b}°.`}],
+        short:`${H(g1)} + ${H(mid)} + ${H(tg)} = 180°, значит ${H(tg)} = 180° − ${a}° − ${b}° = ${c}°.`, place:[{sec:tg, v:c}]})]}
+  ];
+  const lines = [0, 1, 2].map(i => L(i) + L(i + 3)).join(', ');
+  const t = mkProblem('three', C, `Прямые ${lines} пересекаются в точке O. ${H(g1)} = ${a}°, ${H(g2)} = ${b}°`, `Найдите ${H(tg)}.`, c, steps,
+    `Сначала найди угол, вертикальный к известному. Потом три угла подряд на одной прямой дают 180°.`, tg, {g1, g2, mid, tg, a, b, c, s0});
+  t.known0 = [{sec:g1, v:a}, {sec:g2, v:b}];            // числа, известные с самого начала
+  return t;
+}
+function gen4(){ return pick([genSum2, genDiff, genKtimes, genSum3, genThree])(); }
+function gen5(){ const t = gen4(); t.mode = 5; t.type = 'm5.' + t.kind; return t; }
+
+/* =====================================================================
+   9. САМОПРОВЕРКА МАТЕМАТИКИ
+   selfCheck(200) генерирует по N/5 задач каждого режима (с фиксированным зерном,
+   чтобы результат повторялся) и проверяет, что ответ согласован с условием и чертежом:
+   смежные дают 180°, вертикальные равны, вокруг точки 360°, углы — целые от 20° до 160°,
+   вершина в записи ∠ABC — средняя буква, а нарисованные лучи и заливки стоят под теми же
+   градусами, которые написаны в задаче (углы читаются прямо из SVG-кода чертежа).
+   ===================================================================== */
+function svgRayAngles(svg){
+  const out = [], re = /<line x1="180" y1="180" x2="([\d.\-]+)" y2="([\d.\-]+)" stroke="#161616"/g;
+  let m; while((m = re.exec(svg))) out.push(mod360(Math.atan2(180 - +m[2], +m[1] - 180) * 180 / Math.PI));
+  return out;
+}
+function svgWedges(svg){                    // заливки: [{from, size}] в градусах, разобранные из path
+  const out = [], re = /d="M180 180L([\d.\-]+) ([\d.\-]+)A\d+ \d+ 0 [01] 0 ([\d.\-]+) ([\d.\-]+)Z"/g;
+  let m; while((m = re.exec(svg))){
+    const a0 = mod360(Math.atan2(180 - +m[2], +m[1] - 180) * 180 / Math.PI), a1 = mod360(Math.atan2(180 - +m[4], +m[3] - 180) * 180 / Math.PI);
+    out.push({from:a0, size:mod360(a1 - a0)});
+  }
+  return out;
+}
+const degNums = html => Array.from(String(html).replace(/<[^>]*>/g, '').matchAll(/(\d+)°/g)).map(m => +m[1]);
+const plainText = html => String(html).replace(/<[^>]*>/g, '');
+
+function selfCheck(N, seed){
+  N = N || 200;
+  const prev = _rng, SEED = seed || 20261028;
+  setRng(mulberry32(SEED));
+  const R = {N, seed:SEED, tasks:{}, checks:{}, fails:[], total:0};
+  let ctx = '';
+  const chk = (name, cond, detail) => {
+    const c = R.checks[name] || (R.checks[name] = {ok:0, bad:0});
+    if(cond) c.ok++; else { c.bad++; if(R.fails.length < 15) R.fails.push(`${ctx} — ${name}${detail ? ' (' + detail + ')' : ''}`); }
+  };
+  const near = (a, b) => Math.abs(mod360(a - b + 180) - 180) < 0.3;
+  const letterIdx = (fig, ch) => fig.rays.findIndex(r => r.letter === ch);
+
+  function checkFigure(fig){
+    const n = fig.n, tot = fig.sec.reduce((a, s) => a + s.size, 0);
+    chk('вокруг точки O — полный угол 360°', tot === 360, 'сумма ' + tot);
+    chk('лучи заданы целыми градусами', fig.rays.every(r => Number.isInteger(r.ang)));
+    chk('буквы на лучах разные и не совпадают с вершиной O', new Set(fig.rays.map(r => r.letter)).size === n && !fig.rays.some(r => r.letter === 'O'));
+    if(fig.nFree === 0){
+      const half = n / 2, span = fig.nLines === 2 ? 2 : 3;
+      chk('вертикальные углы равны', fig.sec.every((s, i) => s.size === fig.sec[(i + half) % n].size));
+      chk('углы подряд на одной прямой дают 180°', fig.sec.every((s, i) => { let q = 0; for(let k = 0; k < span; k++) q += fig.sec[(i + k) % n].size; return q === 180; }));
+      chk('каждый угол на чертеже — целое число от 20° до 160°', fig.sec.every(s => Number.isInteger(s.size) && s.size >= 20 && s.size <= 160), fig.sec.map(s => s.size).join(','));
+    }
+  }
+  function checkDrawing(fig, svg, fills){
+    const got = svgRayAngles(svg).sort((a, b) => a - b), want = fig.rays.map(r => r.ang).sort((a, b) => a - b);
+    chk('нарисованные лучи стоят под теми же градусами, что в данных', got.length === want.length && got.every((g, i) => near(g, want[i])), got.map(x => x.toFixed(1)).join(',') + ' / ' + want.join(','));
+    const w = svgWedges(svg);
+    chk('заливки на чертеже совпадают по размеру с выделяемыми углами', w.length === fills.length && fills.every((A, i) => near(w[i].from, rayAng(fig, A.from)) && Math.abs(w[i].size - angSize(fig, A)) < 0.3), JSON.stringify(w.map(x => Math.round(x.size))) + ' / ' + fills.map(A => angSize(fig, A)).join(','));
+  }
+  const parseName = (fig, s) => { const m = /^∠(.)(.)(.)$/.exec(s); return m ? {mid:m[2], ends:[m[1], m[3]]} : null; };
+
+  /* --- режим 1 --- */
+  function check1(t){
+    const fig = t.fig, L = k => fig.rays[k].letter, nm1 = parseName(fig, t.text);
+    chk('запись угла: вершина — средняя буква O', !!nm1 && nm1.mid === 'O');
+    const tgt = [L(t.A.from), L(t.A.to)];
+    chk('буквы записи — концы сторон нужного угла', !!nm1 && nm1.ends.slice().sort().join('') === tgt.slice().sort().join(''));
+    chk('угол меньше развёрнутого', angSize(fig, t.A) < 180);
+    checkDrawing(fig, drawFigure(fig, {fills:[{A:t.A, pat:'a'}]}), [t.A]);
+    if(t.variant === 'name'){
+      const o = t.opts, keys = o.list.map(x => { const p = parseName(fig, x.text); return p ? p.mid + '|' + p.ends.slice().sort().join('') : x.text; });
+      chk('4 варианта ответа', o.list.length === 4);
+      chk('ровно один верный вариант, и он указан правильно', o.list.filter(x => x.kind === 'ok').length === 1 && o.list[o.correct].kind === 'ok');
+      chk('варианты не повторяют друг друга', new Set(keys).size === 4);
+      o.list.forEach(x => {
+        const p = parseName(fig, x.text); if(!p){ chk('вариант записан как ∠XYZ', false, x.text); return; }
+        const set = p.ends.slice().sort().join(''), want = tgt.slice().sort().join('');
+        if(x.kind === 'ok') chk('верный вариант = выделенный угол, вершина посередине', p.mid === 'O' && set === want);
+        else if(x.kind === 'vertexMid') chk('ловушка «вершина не в середине»: O стоит с краю', p.mid !== 'O' && (p.ends.includes('O')) && [p.mid].concat(p.ends).every(c => c === 'O' || tgt.includes(c)));
+        else{
+          const ia = letterIdx(fig, p.ends[0]), ib = letterIdx(fig, p.ends[1]);
+          const rel = [{from:ia, to:ib}, {from:ib, to:ia}].find(A => angSize(fig, A) < 180);
+          chk('ловушки-углы с вершиной O: другой угол, а не выделенный', p.mid === 'O' && set !== want && !!rel);
+          if(x.kind === 'neighbor') chk('«соседний»: ровно один общий луч с выделенным', p.ends.filter(c => tgt.includes(c)).length === 1);
+          if(x.kind === 'vertical') chk('«вертикальный»: relation = vert', !!rel && relation(fig, t.A, rel) === 'vert');
+          if(x.kind === 'wider') chk('«лишний сектор»: содержит выделенный угол', !!rel && angSectors(fig, rel).length > angSectors(fig, t.A).length && angSectors(fig, t.A).every(i => angSectors(fig, rel).includes(i)));
+        }
+      });
+    }
+  }
+  /* --- режим 2 --- */
+  function check2(t){
+    const fig = t.fig, a = angSize(fig, t.A), b = angSize(fig, t.B);
+    chk('запись обоих углов: вершина — средняя буква', [t.nA, t.nB].every(s => { const p = parseName(fig, s); return p && p.mid === 'O'; }));
+    if(!t.scale) chk('ответ совпадает с relation() по лучам чертежа', relation(fig, t.A, t.B) === t.ans, relation(fig, t.A, t.B) + ' vs ' + t.ans);
+    if(!t.scale && t.ans === 'adj') chk('смежные: сумма двух углов ровно 180°', a + b === 180, a + '+' + b);
+    if(!t.scale && t.ans === 'vert') chk('вертикальные: углы равны', a === b, a + ' vs ' + b);
+    if(!t.scale && t.ans === 'none' && !t.nums) chk('«ни то ни другое»: нет общей стороны с продолжением и нет противоположных сторон', relation(fig, t.A, t.B) === 'none');
+    if(t.nums){
+      const s = t.nums[0] + t.nums[1];
+      chk('ответ согласован с суммой чисел на чертеже (180° ⇔ смежные)', (s === 180) === (t.ans === 'adj'), t.nums.join('+') + '=' + s + ' ' + t.ans);
+      chk('числа на чертеже от 20° до 160°', t.nums.every(x => x >= 20 && x <= 160), t.nums.join(','));
+      if(!t.scale) chk('числа на чертеже равны нарисованным углам', t.nums[0] === a && t.nums[1] === b, t.nums.join(',') + ' vs ' + a + ',' + b);
+      if(t.scale) chk('задача «рисунку не верь» помечена плашкой', t.banner.length > 0);
+    }
+    chk('для каждого неверного ответа есть подсказка с лучами', ['adj', 'vert', 'none'].filter(x => x !== t.ans).every(x => { const h = hint2(t, x); return h && h.html && h.rays.every(r => r >= 0 && r < fig.n); }));
+    checkDrawing(fig, drawFigure(fig, {fills:[{A:t.A, pat:'a'}, {A:t.B, pat:'b'}]}), [t.A, t.B]);
+  }
+  /* --- режим 3 --- */
+  function checkNames(fig, plain){
+    chk('имена углов: ∠ABC с вершиной посередине или ∠1…∠4', plain.every((s, i) => fig.sec[i].size >= 180 || /^∠\d$/.test(s) || (parseName(fig, s) && parseName(fig, s).mid === 'O')));
+  }
+  function check3(t){
+    const fig = t.fig, n = fig.n, half = n / 2;
+    checkNames(fig, t.nmP);
+    if(t.num){
+      chk('нумерация ∠1…∠4 идёт по кругу, 1 и 3, 2 и 4 — вертикальные', t.num.slice().sort().join('') === '1234' && t.num.every((k, i) => Math.abs(k - t.num[(i + 2) % 4]) === 2));
+    }
+    if(t.kind === 'vals'){
+      const want = t.givens.map(i => sizeOfSec(fig, i));
+      chk('числа в условии равны углам на чертеже', JSON.stringify(degNums(t.text)) === JSON.stringify(want), degNums(t.text) + ' vs ' + want);
+      chk('ожидаемые числа = истинные углы чертежа', Object.keys(t.expected).every(i => t.expected[i] === fig.sec[i].size));
+      chk('ожидаются только данные углы и вертикальные к ним', Object.keys(t.expected).length === new Set(t.givens.concat(t.givens.map(i => (i + half) % n))).size
+        && t.givens.every(i => t.expected[i] !== undefined && t.expected[(i + half) % n] === t.expected[i]));
+      chk('вертикальный к данному — действительно вертикальный (relation)', t.givens.every(i => relation(fig, angOfSector(fig, i), angOfSector(fig, (i + half) % n)) === 'vert'));
+      chk('верно заполненный чертёж проходит проверку, пустой — нет', check3vals(t, Object.assign({}, t.expected)).length === 0 && check3vals(t, {}).length > 0);
+      if(t.fig.nLines === 2 && t.givens.length === 1)       // один данный угол: то же число в смежном — ошибка «extra»
+        chk('то же число в смежный угол распознаётся как ошибка', check3vals(t, Object.assign({}, t.expected, {[(t.givens[0] + 1) % n]:t.expected[t.givens[0]]})).some(x => x.kind === 'extra'));
+    }else{
+      const [i, j] = t.pair, A = angOfSector(fig, i), B = angOfSector(fig, j), a = sizeOfSec(fig, i), b = sizeOfSec(fig, j), nums = degNums(t.text);
+      chk('пара из условия: relation() совпадает с заявленным соотношением', relation(fig, A, B) === t.rel, relation(fig, A, B) + ' vs ' + t.rel);
+      if(t.type === 'm3.pair.vsum') chk('сумма из условия = сумма двух вертикальных углов', t.rel === 'vert' && a === b && nums[0] === a + b, nums[0] + ' vs ' + (a + b));
+      else{
+        const km = /в (\d+) раз/.exec(plainText(t.text));
+        chk('смежные: сумма двух углов 180°', a + b === 180);
+        if(km) chk('«в k раз больше» совпадает с чертежом', +km[1] * Math.min(a, b) === Math.max(a, b), km[1] + ': ' + a + ',' + b);
+        else chk('«на d° больше» совпадает с чертежом', nums[0] === Math.abs(a - b), nums[0] + ' vs ' + Math.abs(a - b));
+        chk('названный первым угол — больший', a > b);
+      }
+    }
+    const fills = t.kind === 'pair' ? [angOfSector(fig, t.pair[0]), angOfSector(fig, t.pair[1])] : [];
+    checkDrawing(fig, drawFigure(fig, {fills:fills.map(A => ({A, pat:'a'}))}), fills);
+  }
+  /* --- режимы 4 и 5 --- */
+  function check45(t){
+    const fig = t.fig, m = t.meta, z = i => fig.sec[i].size, nums = degNums(t.cond);
+    chk('ответ задачи = размер искомого угла на чертеже', t.answer === z(t.target), t.answer + ' vs ' + z(t.target));
+    chk('имена углов: вершина посередине', fig.sec.every((s, i) => s.size >= 180 || /^∠\d$/.test(t.C.plain(i)) || (parseName(fig, t.C.plain(i)) && parseName(fig, t.C.plain(i)).mid === 'O')));
+    // разность d в задаче «на d° больше» — не угол, а разность двух углов (может быть и 10°), поэтому её не проверяем на диапазон углов
+    if(t.kind !== 'diff') chk('числа в условии (углы и их суммы) лежат в пределах от 20° до 360°', nums.every(x => x >= 20 && x <= 360), nums.join(','));
+    if(t.kind === 'sum2'){
+      chk('сумма из условия = сумма двух вертикальных углов', relation(fig, angOfSector(fig, m.pair[0]), angOfSector(fig, m.pair[1])) === 'vert' && z(m.pair[0]) === z(m.pair[1]) && nums[0] === z(m.pair[0]) + z(m.pair[1]) && nums[0] === m.S);
+      chk('искомый угол смежный с парой, ответ = 180° − угол', relation(fig, angOfSector(fig, m.base), angOfSector(fig, m.q)) === 'adj' && t.answer === 180 - z(m.pair[0]));
+    }else if(t.kind === 'diff'){
+      chk('смежные углы дают 180°', relation(fig, angOfSector(fig, m.big), angOfSector(fig, m.small)) === 'adj' && z(m.big) + z(m.small) === 180);
+      chk('разность из условия = разность углов', nums[0] === m.d && m.d === z(m.big) - z(m.small), nums[0] + ' vs ' + (z(m.big) - z(m.small)));
+    }else if(t.kind === 'ktimes'){
+      chk('смежные углы дают 180°', relation(fig, angOfSector(fig, m.big), angOfSector(fig, m.small)) === 'adj' && z(m.big) + z(m.small) === 180);
+      const km = /в (\d+) раз/.exec(plainText(t.cond));
+      chk('«в k раз больше» совпадает с чертежом', !!km && +km[1] === m.k && m.k * z(m.small) === z(m.big), km && km[1] + ': ' + z(m.small) + ',' + z(m.big));
+    }else if(t.kind === 'sum3'){
+      const s3 = m.three.reduce((a, i) => a + z(i), 0);
+      chk('сумма трёх углов из условия + четвёртый = 360° (полный круг)', nums[0] === m.S && s3 === m.S && m.S + z(m.w) === 360, nums[0] + ',' + s3 + ',' + z(m.w));
+      chk('искомый угол — один из трёх названных', m.three.includes(m.t));
+    }else if(t.kind === 'three'){
+      const tri = [m.g1, m.mid, m.tg].reduce((a, i) => a + z(i), 0), s0 = m.s0;
+      chk('три угла подряд лежат между противоположными лучами и дают 180°', tri === 180 && fig.rays[(s0 + 3) % 6].ang === mod360(fig.rays[s0].ang + 180), tri);
+      chk('условие содержит ровно данные ∠ (a и b), второй вертикален к среднему', JSON.stringify(nums) === JSON.stringify([m.a, m.b]) && relation(fig, angOfSector(fig, m.g2), angOfSector(fig, m.mid)) === 'vert' && z(m.g2) === z(m.mid) && z(m.mid) === m.b);
+      chk('ответ = 180° − a − b', t.answer === 180 - m.a - m.b);
+    }
+    t.steps.forEach(step => {
+      let lastRel = null;
+      step.qs.forEach(q => {
+        if(q.id === 'rel'){ lastRel = q.ans; chk('шаг «какие это углы»: ответ — смежные или вертикальные', q.ans === 'adj' || q.ans === 'vert'); }
+        if(q.id === 'rule' && lastRel) chk('правило согласовано с видом углов (вертикальные ⇒ равны, смежные ⇒ 180°)', (lastRel === 'vert' && q.ans === 'eq') || (lastRel === 'adj' && q.ans === 'sum180'));
+        if(q.kind === 'choice') chk('для каждого неверного варианта есть подсказка', q.opts.filter(o => o.id !== q.ans).every(o => { const h = q.hint(o.id); return h && h.html && String(h.html).length > 3; }));
+        if(q.kind === 'num'){
+          chk('числа шага равны углам на чертеже', q.place.every(p => p.v === z(p.sec)), JSON.stringify(q.place) + ' ' + q.ans);
+          if(q.place.length) chk('ответ шага = значение этих углов', q.place[0].v === q.ans);
+          if(!q.place.length) chk('ответ шага без угла: сумма смежных = 180°', q.ans === 180);
+          chk('ответ — целое число градусов', Number.isInteger(q.ans) && q.ans > 0 && q.ans <= 360);
+        }
+      });
+    });
+    const known = {}; (t.known0 || []).forEach(k => known[k.sec] = k.v);
+    chk('известные с начала числа равны углам чертежа', Object.keys(known).every(i => known[i] === z(i)));
+    checkDrawing(fig, problemSvg(t), t.steps[0].angles.map(a => a.A));
+  }
+  const problemSvg = t => drawFigure(t.fig, {fills:t.steps[0].angles});
+
+  const per = Math.floor(N / 5), counts = {};
+  const runs = [[1, gen1, check1], [2, gen2, check2], [3, gen3, check3], [4, gen4, check45], [5, gen5, check45]];
+  try{
+    runs.forEach(([mode, gen, check]) => {
+      for(let i = 0; i < per; i++){
+        ctx = `режим ${mode}`;
+        let t; try{ t = gen(); }catch(e){ chk('генератор не падает', false, e.message); continue; }
+        ctx = `режим ${mode}, ${t.type}`;
+        counts[mode] = (counts[mode] || 0) + 1; R.total++; R.tasks[t.type] = (R.tasks[t.type] || 0) + 1;
+        checkFigure(t.fig);
+        try{ check(t); }catch(e){ chk('проверка задачи не падает', false, e.message); }
+      }
+    });
+  }finally{ _rng = prev; }
+  R.counts = counts;
+  R.checkCount = Object.keys(R.checks).reduce((a, k) => a + R.checks[k].ok + R.checks[k].bad, 0);
+  R.bad = Object.keys(R.checks).reduce((a, k) => a + R.checks[k].bad, 0);
+  return R;
+}
+function formatCheck(R){
+  const L = [];
+  L.push('САМОПРОВЕРКА МАТЕМАТИКИ');
+  L.push(`Сгенерировано задач: ${R.total} (по режимам: ${[1, 2, 3, 4, 5].map(m => m + ':' + (R.counts[m] || 0)).join(', ')}), зерно ${R.seed}`);
+  L.push(`Выполнено проверок: ${R.checkCount}, расхождений: ${R.bad}`);
+  L.push('');
+  Object.keys(R.checks).forEach(k => { const c = R.checks[k]; L.push(`${c.bad ? '[!!]' : '[ok]'} ${k}: ${c.ok + c.bad}${c.bad ? ', ошибок ' + c.bad : ''}`); });
+  if(R.fails.length){ L.push(''); L.push('Первые расхождения:'); R.fails.forEach(f => L.push(' • ' + f)); }
+  L.push('');
+  L.push(R.bad === 0 ? 'ИТОГ: всё согласовано' : 'ИТОГ: НАЙДЕНЫ РАСХОЖДЕНИЯ');
+  return L.join('\n');
+}
+
+/* =====================================================================
+   8. ИНТЕРФЕЙС (всё ниже трогает document только внутри функций)
+   ===================================================================== */
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+
+/* ---------- 8.1 пиксельные текстуры: рисуем сами, 16×16, случайные оттенки ---------- */
+const TEX = {};
+const canv = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const rgbc = (c, d) => `rgb(${clamp(c[0] + d, 0, 255)},${clamp(c[1] + d, 0, 255)},${clamp(c[2] + d, 0, 255)})`;
+const ORE_COL = {coal:[26, 26, 30], iron:[224, 180, 152], gold:[252, 218, 64], diamond:[96, 238, 238]};
+function paintTile(x, ox, oy, kind, r){
+  const shift = (r() - .5) * 14, fringe = [];
+  for(let i = 0; i < 16; i++) fringe.push(3 + Math.floor(r() * 3));
+  const stoneLike = kind === 'stone' || kind === 'deep' || kind.indexOf('ore:') === 0;
+  for(let py = 0; py < 16; py++) for(let px = 0; px < 16; px++){
+    let col = [128, 128, 128], d = Math.floor((r() - .5) * 22 + shift);
+    if(kind === 'grassSide') col = py < fringe[px] ? [92, 168, 52] : [134, 96, 67];
+    else if(kind === 'dirt') col = [134, 96, 67];
+    else if(kind === 'deep') col = [72, 72, 82];
+    if(kind === 'dirt' && r() < .06) d -= 28;
+    if(stoneLike && r() < .07) d -= 24;
+    x.fillStyle = rgbc(col, d); x.fillRect(ox + px, oy + py, 1, 1);
+  }
+  if(kind.indexOf('ore:') === 0){
+    const oc = ORE_COL[kind.slice(4)];
+    for(let k = 0; k < 6; k++){
+      const cx = 2 + Math.floor(r() * 11), cy = 2 + Math.floor(r() * 11);
+      [[0, 0], [1, 0], [0, 1], [1, 1]].forEach((o, j) => { if(j < 2 || r() < .6){ x.fillStyle = rgbc(oc, Math.floor((r() - .5) * 20)); x.fillRect(ox + cx + o[0], oy + cy + o[1], 1, 1); } });
+    }
+  }
+}
+function gemCanvas(){
+  const c = canv(16, 16), x = c.getContext('2d');
+  const inside = (px, py) => {
+    if(py >= 3 && py <= 6){ const hw = 4 + (py - 3); return Math.abs(px - 7.5) <= hw; }
+    if(py >= 7 && py <= 13){ const hw = 7.2 - (py - 7) * 1.12; return Math.abs(px - 7.5) <= hw; }
+    return false;
+  };
+  for(let py = 0; py < 16; py++) for(let px = 0; px < 16; px++){
+    if(!inside(px, py)) continue;
+    const edge = !inside(px - 1, py) || !inside(px + 1, py) || !inside(px, py - 1) || !inside(px, py + 1);
+    let col = '#4bd6e6';
+    if(edge) col = '#0b5d6b';
+    else if(py <= 4) col = '#d5fcff';
+    else if(Math.abs(px - 7.5) < 1.6) col = '#9cf0f8';
+    else if(px < 7.5) col = '#2bb4c9';
+    else col = '#66e0ee';
+    x.fillStyle = col; x.fillRect(px, py, 1, 1);
+  }
+  return c;
+}
+function bmpCanvas(rows, color){
+  const c = canv(rows[0].length, rows.length), x = c.getContext('2d');
+  rows.forEach((row, y) => { for(let i = 0; i < row.length; i++) if(row[i] !== '.'){ x.fillStyle = row[i] === '#' ? color : row[i] === 'y' ? '#ffd23f' : color; x.fillRect(i, y, 1, 1); } });
+  return c;
+}
+const BMP = {
+  snd1:[".............",".............","......#......",".....##...#..","....###...#..",".######.#.#..",".######.#.#..",".######.#.#..","....###...#..",".....##...#..","......#......",".............","............."],
+  snd0:[".............",".............","......#......",".....##......","....###.#...#",".######..#.#.",".######...#..",".######..#.#.","....###.#...#",".....##......","......#......",".............","............."],
+  sun:["......#......","..#...#...#..","...#.....#...","....#####....","...#######...","...#######...","##.#######.##","...#######...","...#######...","....#####....","...#.....#...","..#...#...#..","......#......"],
+  book:[".............",".............",".###########.",".#....#....#.",".#.##.#.##.#.",".#....#....#.",".#.##.#.##.#.",".#....#....#.",".#.##.#.##.#.",".#....#....#.",".###########.",".............","............."],
+  lock:[".............","....#####....","...#.....#...","...#.....#...","...#.....#...",".###########.",".###########.",".#####.#####.",".#####.#####.",".###########.",".###########.",".............","............."],
+  check:[".............",".............",".............","...........#.","..........##.",".........##..","#.......##...","##.....##....",".##...##.....","..##.##......","...###.......","....#........","............."]
+};
+const CLOUDS = [
+  ["......####......","...##########...","..############..","################","################",".oooooooooooooo."],
+  ["....#####.......","..#########.####",".###############","################","################","..oooooooooooo.."],
+  ["........###.....","...#########....","..###########...",".##############.","################","oooooooooooooooo"]
+];
+function buildTextures(){
+  const url = c => c.toDataURL('image/png');
+  // блоки для значков и хотбара
+  [['coal', 'ore:coal', 11], ['iron', 'ore:iron', 22], ['gold', 'ore:gold', 33], ['deep', 'deep', 44]].forEach(a => {
+    const c = canv(16, 16); paintTile(c.getContext('2d'), 0, 0, a[1], mulberry32(a[2])); TEX[a[0]] = url(c);
+  });
+  TEX.diamond = url(gemCanvas());
+  // мир: трава + земля (4 ряда), камень с рудой (16 рядов)
+  const g = canv(384, 64), gx = g.getContext('2d'), rg = mulberry32(101);
+  for(let i = 0; i < 24; i++){ paintTile(gx, i * 16, 0, 'grassSide', rg); for(let j = 1; j < 4; j++) paintTile(gx, i * 16, j * 16, 'dirt', rg); }
+  TEX.ground = url(g);
+  const d = canv(384, 256), dx = d.getContext('2d'), rd = mulberry32(202);
+  for(let j = 0; j < 16; j++) for(let i = 0; i < 24; i++){
+    const q = rd(); let k = 'stone';
+    if(q < .07) k = 'ore:coal'; else if(q < .10) k = 'ore:iron'; else if(q < .115) k = 'ore:gold'; else if(q < .122) k = 'ore:diamond';
+    paintTile(dx, i * 16, j * 16, k, rd);
+  }
+  TEX.deepbg = url(d);
+  // небо: звёзды ночью, облака, солнце / луна
+  const st = canv(192, 96), sx = st.getContext('2d'), rs = mulberry32(303);
+  for(let i = 0; i < 46; i++){
+    const x = Math.floor(rs() * 190), y = Math.floor(rs() * 94);
+    sx.fillStyle = rs() < .3 ? '#ffe9a6' : '#ffffff'; sx.fillRect(x, y, 1, 1);
+    if(rs() < .2){ sx.fillRect(x - 1, y, 3, 1); sx.fillRect(x, y - 1, 1, 3); }
+  }
+  TEX.stars = url(st);
+  CLOUDS.forEach((rows, i) => {
+    const c = canv(16, 6), x = c.getContext('2d');
+    rows.forEach((row, y) => { for(let k = 0; k < 16; k++) if(row[k] !== '.'){ x.fillStyle = row[k] === 'o' ? '#d7e4f4' : '#ffffff'; x.fillRect(k, y, 1, 1); } });
+    TEX['cloud' + i] = url(c);
+  });
+  const sun = canv(8, 8), sux = sun.getContext('2d');
+  sux.fillStyle = '#f59f00'; sux.fillRect(0, 0, 8, 8); sux.fillStyle = '#ffd23f'; sux.fillRect(1, 1, 6, 6); sux.fillStyle = '#fff1a8'; sux.fillRect(2, 2, 4, 4);
+  TEX.sunBig = url(sun);
+  const moon = canv(8, 8), mx = moon.getContext('2d');
+  mx.fillStyle = '#c9c9da'; mx.fillRect(0, 0, 8, 8); mx.fillStyle = '#ececf6'; mx.fillRect(1, 1, 6, 6);
+  mx.fillStyle = '#b3b3c8'; [[2, 2], [5, 3], [3, 5], [5, 5]].forEach(p => mx.fillRect(p[0], p[1], 1, 1));
+  TEX.moonBig = url(moon);
+  // маленькие значки интерфейса
+  Object.keys(BMP).forEach(k => { TEX[k] = url(bmpCanvas(BMP[k], '#161616')); });
+  const mc = canv(13, 13), mcx = mc.getContext('2d');
+  for(let y = 0; y < 13; y++) for(let x = 0; x < 13; x++){
+    const a = Math.hypot(x - 6, y - 6) <= 5.6, b = Math.hypot(x - 9.2, y - 4.6) <= 4.6;
+    if(a && !b){ mcx.fillStyle = '#161616'; mcx.fillRect(x, y, 1, 1); }
+  }
+  TEX.moon = url(mc);
+  TEX.lockL = TEX.lock; TEX.checkG = url(bmpCanvas(BMP.check, '#1f7a12'));
+  // применить
+  const root = document.documentElement.style;
+  $('#ground').style.backgroundImage = `url(${TEX.ground})`;
+  $('#deep').style.backgroundImage = `url(${TEX.deepbg})`;
+  $('#stars').style.backgroundImage = `url(${TEX.stars})`;
+  [0, 1, 2].forEach(i => { $('#cl' + (i + 1)).src = TEX['cloud' + i]; });
+  $('#bTeacher').firstElementChild.src = TEX.book;
+}
+
+/* ---------- 8.2 звуки (8-битные, Web Audio, по умолчанию выключены) ---------- */
+const Sfx = {ctx:null};
+function audioCtx(){
+  try{
+    if(!Sfx.ctx){ const C = window.AudioContext || window.webkitAudioContext; if(!C) return null; Sfx.ctx = new C(); }
+    if(Sfx.ctx.state === 'suspended') Sfx.ctx.resume();
+    return Sfx.ctx;
+  }catch(e){ return null; }
+}
+const SFX = {
+  ok:[[660, .08], [880, .14]],
+  bad:[[196, .12, 'triangle', .1], [147, .2, 'triangle', .1]],
+  mine:[[523, .08], [659, .08], [784, .08], [1047, .22]],
+  win:[[523, .1], [659, .1], [784, .1], [659, .1], [1047, .3]],
+  click:[[440, .04, 'square', .04]]
+};
+function playSfx(name){
+  if(!S.sound) return;
+  const c = audioCtx(); if(!c || !SFX[name]) return;
+  let t = c.currentTime + .01;
+  SFX[name].forEach(n => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = n[2] || 'square'; o.frequency.setValueAtTime(n[0], t);
+    g.gain.setValueAtTime(n[3] || .05, t); g.gain.exponentialRampToValueAtTime(.0001, t + n[1]);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + n[1] + .03); t += n[1] * .92;
+  });
+}
+
+/* ---------- 8.3 тема, хотбар, всплывающие сообщения ---------- */
+function themeNow(){
+  if(S.theme) return S.theme;
+  try{ return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day'; }catch(e){ return 'day'; }
+}
+function applyTheme(){
+  const t = themeNow();
+  document.documentElement.setAttribute('data-theme', t);
+  $('#orb').src = t === 'night' ? TEX.moonBig : TEX.sunBig;
+  $('#bTheme').firstElementChild.src = t === 'night' ? TEX.moon : TEX.sun;
+  $('#bTheme').setAttribute('aria-label', t === 'night' ? 'Включить день' : 'Включить ночь');
+  $('#bSound').firstElementChild.src = S.sound ? TEX.snd1 : TEX.snd0;
+  $('#bSound').setAttribute('aria-label', S.sound ? 'Звук включён. Выключить' : 'Звук выключен. Включить');
+  $('#bSound').setAttribute('aria-pressed', S.sound ? 'true' : 'false');
+}
+function renderHotbar(newIdx){
+  const counts = hotbarCounts();
+  $('#hotbar').innerHTML = counts.map((c, i) => {
+    const ore = oreOfSlot(i);
+    return `<div class="hb${i === newIdx ? ' new' : ''}" title="${c ? ORE_NAMES[ore] + ' ×' + c : 'пусто'}">${c ? `<img src="${TEX[ore]}" alt="${ORE_NAMES[ore]}">` + (c > 1 ? `<b>${c}</b>` : '') : ''}</div>`;
+  }).join('');
+}
+let _toastT = 0;
+function toast(html, ms){
+  const t = $('#toast'); t.innerHTML = html; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+  clearTimeout(_toastT); _toastT = setTimeout(() => t.classList.remove('on'), ms || 2800);
+}
+
+/* ---------- 8.4 экраны и менеджер попыток ---------- */
+const App = {screen:'home', mode:0};
+const GENS = {}, MOUNTS = {};                 // режимы регистрируют себя: GENS[m], MOUNTS[m]
+function go(screen, mode){
+  App.screen = screen; App.mode = mode || 0;
+  if(screen === 'home') renderHome();
+  else if(screen === 'teacher' && typeof renderTeacher === 'function') renderTeacher();
+  else if(screen === 'mode') startMode(mode);
+  window.scrollTo(0, 0);
+}
+function renderHome(){
+  const done = MODES.slice(1).filter((m, i) => S.modes[i + 1].passed).length;
+  const tot = [1, 2, 3, 4, 5].reduce((a, m) => ({s:a.s + S.modes[m].self, h:a.h + S.modes[m].hint + S.modes[m].shown}), {s:0, h:0});
+  let h = `<section class="win"><h1>ШАХТА УГЛОВ</h1>
+    <p class="lead">Копай вглубь: чем глубже шахта, тем хитрее задачи про <b>смежные</b> и <b>вертикальные</b> углы. Чтобы открыть следующую шахту, реши <b>${NEED} задач из ${ROUND}</b>.</p>
+    <div class="inset"><span class="cnt">РЕШЕНО САМ: <b>${tot.s}</b> &nbsp; С ПОДСКАЗКОЙ: <b>${tot.h}</b> &nbsp; БЛОКОВ: <b>${S.mined}</b></span></div></section>
+    <section class="win"><h2>ВЫБЕРИ ШАХТУ</h2>`;
+  const ics = ['coal', 'iron', 'gold', 'diamond', 'deep'];
+  for(let m = 1; m <= 5; m++){
+    const open = isOpen(m), st = S.modes[m], pass = st.passed;
+    const status = !open ? `<img src="${TEX.lock}" width="26" height="26" alt="закрыто"><br>ЗАКРЫТО`
+      : pass ? `<img src="${TEX.checkG}" width="26" height="26" alt="пройдено"><br>ПРОЙДЕНО` : (st.round.n ? `${st.round.ok}/${NEED}` : 'ОТКРЫТО');
+    h += `<button class="btn mine${open ? '' : ' lock'}" data-m="${m}" type="button" aria-label="Глубина ${m}. ${MODES[m].name}. ${open ? (pass ? 'Пройдено' : 'Открыто') : 'Закрыто'}">
+      <span class="ic"><img src="${TEX[ics[m - 1]]}" alt=""></span>
+      <span class="grow"><span class="dep">ГЛУБИНА ${m}</span><span class="nm">${MODES[m].name.toUpperCase()}</span><span class="ds">${esc(MODES[m].desc)}</span></span>
+      <span class="st">${status}</span></button>`;
+  }
+  h += `</section><section class="win"><h2>КАК ЭТО РАБОТАЕТ</h2>
+    <ul class="muted" style="margin:0;padding-left:20px"><li>Ошибся — получишь подсказку на один шаг. Со второй ошибки покажем решение.</li>
+    <li>Каждые 5 верных ответов <b>без подсказки</b> — добыт блок: уголь, железо, золото, алмаз.</li>
+    <li>Прогресс хранится на этом устройстве. ${done} из 5 шахт пройдено.</li></ul></section>`;
+  $('#main').innerHTML = h;
+  $$('.mine').forEach(b => b.addEventListener('click', () => { playSfx('click'); go('mode', +b.dataset.m); }));
+}
+const Run = {mode:0, task:null, errs:0, shown:false, done:false,
+  begin(mode, task){ this.mode = mode; this.task = task; this.errs = 0; this.shown = false; this.done = false; },
+  finish(){
+    if(this.done) return null; this.done = true;
+    const outcome = this.shown ? 'shown' : this.errs ? 'hint' : 'self';
+    const res = recordTask(this.mode, this.task.type, outcome, this.errs);
+    res.outcome = outcome;
+    updateXp(); renderHotbar(res.mined ? (S.mined - 1) % 9 : -1);
+    if(res.mined){
+      const ore = oreOfSlot((S.mined - 1) % 9);
+      toast(`<img src="${TEX[ore]}" alt=""><span>ДОБЫТ БЛОК:<br>${ORE_NAMES[ore]}</span>`, 3200); playSfx('mine');
+    }
+    return res;
+  }};
+function fbHTML(kind, html){ return `<div class="fb ${kind}" role="status"><span class="tag">${{ok:'ВЕРНО!', hint:'ПОДСКАЗКА', show:'РАЗБОР'}[kind]}</span>${html}</div>`; }
+function setFb(html, kind){
+  const e = $('#fb'); if(!e) return;
+  e.innerHTML = html ? fbHTML(kind, html) : '';
+  if(html && e.firstElementChild) e.firstElementChild.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function flash(ok){
+  const c = $('#card'); if(!c) return;
+  c.classList.remove('ok', 'shake'); void c.offsetWidth; c.classList.add(ok ? 'ok' : 'shake');
+  playSfx(ok ? 'ok' : 'bad');
+}
+/* Общее правило обратной связи: 1-я ошибка → подсказка на шаг, 2-я → разбор с подсветкой на чертеже.
+   gate — счётчик попыток для одного вопроса. Возвращает 'right' | 'hint' | 'shown'. */
+function judge(gate, ok, o){
+  if(ok){ flash(true); return 'right'; }
+  gate.tries = (gate.tries || 0) + 1; Run.errs++; noteTrap(o.trap); flash(false);
+  if(gate.tries === 1){ setFb(o.hint, 'hint'); if(o.onHint) o.onHint(); return 'hint'; }
+  Run.shown = true; setFb(o.reveal, 'show'); if(o.onReveal) o.onReveal(); return 'shown';
+}
+function updateXp(){
+  const r = S.modes[App.mode] && S.modes[App.mode].round, m = S.modes[App.mode];
+  if(!r || !$('#xp')) return;
+  $('#xp').innerHTML = Array.from({length:NEED}, (_, i) => `<i class="${i < r.ok ? 'on' : ''}"></i>`).join('');
+  $('#xpTxt').textContent = `ВЕРНО ${Math.min(r.ok, NEED)} ИЗ ${NEED} · ЗАДАЧА ${Math.min(r.n + 1, ROUND)} ИЗ ${ROUND}`;
+  $('#cnt').innerHTML = `САМ: <b>${m.self}</b> &nbsp; С ПОДСКАЗКОЙ: <b>${m.hint + m.shown}</b>`;
+}
+function startMode(mode){
+  if(!isOpen(mode)){ toast(`Сначала пройди глубину ${mode - 1}: нужно ${NEED} верных из ${ROUND}`); App.screen = 'home'; return; }
+  const r = S.modes[mode].round;
+  if(r.ok >= NEED || r.miss > ROUND - NEED) newRound(mode);
+  App.screen = 'mode'; App.mode = mode;
+  $('#main').innerHTML = `<section class="win" id="card">
+    <div class="row between"><div><span class="px" style="font-size:10px">ГЛУБИНА ${mode}</span><h2 style="margin:6px 0 0">${MODES[mode].name.toUpperCase()}</h2></div><button class="btn" id="bMenu" type="button">МЕНЮ</button></div>
+    <div class="xpl" style="margin-top:12px"><span>ОПЫТ</span><span id="xpTxt"></span></div><div class="xp" id="xp"></div><div class="cnt" id="cnt"></div>
+    <div id="stage"></div></section>`;
+  $('#bMenu').addEventListener('click', () => { playSfx('click'); go('home'); });
+  nextTask();
+}
+function nextTask(){
+  const mode = App.mode, stage = $('#stage');
+  if(!GENS[mode] || !MOUNTS[mode]){ stage.innerHTML = `<p class="lead">Эта шахта ещё строится.</p>`; updateXp(); return; }
+  const t = GENS[mode]();
+  Run.begin(mode, t); stage.innerHTML = ''; MOUNTS[mode](t, stage); updateXp();
+  const c = $('#card'); if(c){ c.classList.remove('ok', 'shake'); }
+}
+function showNext(res){
+  const bar = $('#nextbar'); if(!bar) return;
+  bar.innerHTML = `<div class="row" style="margin:14px 3px 0"><button class="btn big grow" id="bNext" type="button">${res.verdict ? 'ИТОГ ШАХТЫ' : 'ДАЛЬШЕ'}</button></div>`;
+  const b = $('#bNext');
+  b.addEventListener('click', () => { playSfx('click'); if(res.verdict) showResult(res.verdict); else nextTask(); });
+  b.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function showResult(verdict){
+  const mode = App.mode, r = S.modes[mode].round, stage = $('#stage');
+  if(verdict === 'win'){
+    playSfx('win');
+    const last = mode === 5;
+    stage.innerHTML = `<div class="inset" style="margin-top:14px"><h2>ШАХТА ПРОЙДЕНА!</h2>
+      <p class="lead">Верных ответов: <b>${r.ok}</b> из ${r.n}. ${last ? 'Все пять шахт пройдены — ты настоящий шахтёр углов!' : `Открыта глубина ${mode + 1}: <b>${esc(MODES[mode + 1].name)}</b>.`}</p>
+      <div class="opts">${last ? '' : '<button class="btn big block" id="bDeeper" type="button">ИДТИ ГЛУБЖЕ</button>'}<button class="btn big block" id="bAgain" type="button">ЕЩЁ ПОТРЕНИРОВАТЬСЯ</button><button class="btn big block" id="bHome" type="button">В МЕНЮ</button></div></div>`;
+    if(!last) $('#bDeeper').addEventListener('click', () => { newRound(mode); go('mode', mode + 1); });
+  }else{
+    stage.innerHTML = `<div class="inset" style="margin-top:14px"><h2>ПОКА НЕ ХВАТИЛО</h2>
+      <p class="lead">Верных ответов: <b>${r.ok}</b> из ${r.n}. Нужно ${NEED} из ${ROUND}. Ничего страшного: подсказки и разборы для того и есть. Попробуй ещё раз — задачи будут новыми.</p>
+      <div class="opts"><button class="btn big block" id="bAgain" type="button">ПОПРОБОВАТЬ СНОВА</button><button class="btn big block" id="bHome" type="button">В МЕНЮ</button></div></div>`;
+  }
+  $('#bAgain').addEventListener('click', () => { newRound(mode); startMode(mode); });
+  $('#bHome').addEventListener('click', () => { newRound(mode); go('home'); });
+  $('#stage').scrollIntoView({block:'start', behavior:'smooth'});
+}
+/* кусочки разметки для режимов */
+const boardHTML = svg => `<div class="board">${svg}</div>`;
+const svgXY = (svg, e) => { const r = svg.getBoundingClientRect(); return [(e.clientX - r.left) * 360 / r.width, (e.clientY - r.top) * 360 / r.height]; };
+const finishTask = (okHtml) => {
+  const res = Run.finish(); if(!res) return;
+  if(!Run.shown && okHtml) setFb(okHtml, 'ok');
+  showNext(res);
+};
+
+/* ---------- 8.5 запуск ---------- */
+function boot(){
+  loadState();
+  buildTextures();
+  applyTheme(); renderHotbar(-1);
+  $('#logo').addEventListener('click', () => go('home'));
+  $('#bTeacher').addEventListener('click', () => go('teacher'));
+  $('#bSound').addEventListener('click', () => { S.sound = !S.sound; saveState(); applyTheme(); if(S.sound){ audioCtx(); playSfx('ok'); } });
+  $('#bTheme').addEventListener('click', () => { S.theme = themeNow() === 'night' ? 'day' : 'night'; saveState(); applyTheme(); });
+  go('home');
+}
+
+/* ---------- 9. режим 1: «Найди угол» ---------- */
+const mt = text => esc(text).replace('∠', '<span class="ang">∠</span>');       // запись угла внутри кнопки
+GENS[1] = gen1;
+MOUNTS[1] = function(t, stage){
+  const fig = t.fig, gate = {}, isFind = t.variant === 'find';
+  const ray = k => nm('O' + fig.rays[k].letter);
+  const sides = `${ray(t.A.from)} и ${ray(t.A.to)}`;
+  const middle = t.span === 2 ? fig.rays[(t.A.from + 1) % fig.n].letter : null;
+  stage.innerHTML = `<p class="task">${isFind ? `Найди на рисунке угол ${nm(t.text)}. Нажми на него.` : 'Как правильно записать выделенный угол?'}</p>
+    <div id="boardHost"></div><div id="ans"></div><div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  let locked = false;
+  const paint = o => {
+    host.innerHTML = boardHTML(drawFigure(fig, Object.assign({attrs:isFind && !locked ? 'class="tap"' : ''}, o)));
+    if(isFind && !locked) $('svg', host).addEventListener('click', onTap);
+  };
+  const okWhy = `${nm(t.text)}: вершина O посередине, стороны — лучи ${sides}.` + (t.span === 2 ? ` Угол состоит из двух частей.` : '');
+  const showOk = () => paint({fills:[{A:t.A, pat:'ok'}], arcs:[{A:t.A, r:36, color:'#2f9e1f'}]});
+
+  /* --- вариант «по записи найди угол» --- */
+  function onTap(e){
+    const [x, y] = svgXY(e.currentTarget, e), idx = sectorAtPoint(fig, x, y);
+    if(idx < 0 || locked) return;
+    if(angContains(fig, t.A, pointAngle(x, y))){
+      judge(gate, true); locked = true; showOk(); finishTask(okWhy); return;
+    }
+    const tp = angOfSector(fig, idx), tn = nm(angText(fig, tp, false));
+    const rel = relation(fig, tp, t.A);
+    const sh = share(fig, tp, t.A);
+    const lead = rel === 'vert' ? `Ты показал ${tn} — это вертикальный угол «напротив» нужного.`
+      : sh ? `Ты показал ${tn}: один луч совпадает с нужным, а второй другой.` : `Ты показал ${tn}.`;
+    const r = judge(gate, false, {
+      trap:rel === 'vert' ? 'vertical' : sh ? 'neighbor' : 'wrongSector',
+      hint:`<p>${lead}</p><p>У угла ${nm(t.text)} вершина — средняя буква O, а стороны — лучи ${sides}. Они подсвечены. Угол лежит между ними.</p>`,
+      reveal:`<p>${lead}</p><p>Нужный угол ${nm(t.text)} — вот он. Вершина O посередине, стороны — лучи ${sides}.${t.span === 2 ? ` Между ними лежит ещё луч ${nm('O' + middle)}: угол из двух частей.` : ''}</p>`
+    });
+    if(r === 'hint') paint({fills:[{A:tp, pat:'bad'}], rayEm:[t.A.from, t.A.to]});
+    else{ locked = true; paint({fills:[{A:t.A, pat:'ok'}], rayEm:[t.A.from, t.A.to], arcs:[{A:t.A, r:36, color:'#2f9e1f'}]}); finishTask(null); }
+  }
+
+  /* --- вариант «по рисунку выбери запись» --- */
+  const hints = {
+    vertexMid:`В записи угла вершина стоит посередине. Вершина здесь — точка O, значит, O должна быть средней буквой.`,
+    neighbor:`Это запись соседнего угла: один луч общий с выделенным, а второй другой. Подсвечены стороны выделенного угла — прочитай буквы на их концах.`,
+    vertical:`Это вертикальный угол, он «напротив» выделенного. Нужен именно выделенный: найди подсвеченные лучи и прочитай буквы на их концах.`,
+    wider:`В эту запись попал лишний сектор. У выделенного угла только две стороны — они подсвечены. Какие буквы на их концах?`
+  };
+  if(isFind) paint({});
+  else{
+    const base = {fills:[{A:t.A, pat:'a'}], arcs:[{A:t.A, r:36, color:'#8a6500'}]};
+    paint(base);
+    $('#ans').innerHTML = `<div class="opts two">${t.opts.list.map((o, i) => `<button class="btn math" data-i="${i}" type="button" aria-label="${esc(o.text)}">${mt(o.text)}</button>`).join('')}</div>`;
+    $$('#ans .btn').forEach(b => b.addEventListener('click', () => {
+      if(locked) return;
+      const o = t.opts.list[+b.dataset.i], ok = o.kind === 'ok';
+      const r = judge(gate, ok, {
+        trap:o.kind,
+        hint:`<p>${hints[o.kind]}</p>`,
+        reveal:`<p>Стороны выделенного угла — лучи ${sides}. Вершина O стоит посередине. Правильная запись: ${nm(t.opts.list[t.opts.correct].text)}.</p>` + (t.span === 2 ? `<p>Между этими лучами лежит ещё луч ${nm('O' + middle)}, поэтому угол состоит из двух частей.</p>` : '')
+      });
+      const btns = $$('#ans .btn');
+      if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint({fills:[{A:t.A, pat:'ok'}], arcs:[{A:t.A, r:36, color:'#2f9e1f'}]}); finishTask(okWhy); }
+      else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint(Object.assign({rayEm:[t.A.from, t.A.to]}, base)); }
+      else{ locked = true; b.classList.add('bad'); btns.forEach((x, i) => { x.disabled = true; if(i === t.opts.correct) x.classList.add('good'); }); paint({fills:[{A:t.A, pat:'ok'}], rayEm:[t.A.from, t.A.to], arcs:[{A:t.A, r:36, color:'#2f9e1f'}]}); finishTask(null); }
+    }));
+  }
+};
+TRAP_TITLES.wrongSector = 'Показал угол с другими сторонами';
+
+/* ---------- 10. режим 2: «Какие это углы?» ---------- */
+GENS[2] = gen2;
+MOUNTS[2] = function(t, stage){
+  const fig = t.fig, gate = {};
+  const label = (A, text) => { const size = angSize(fig, A); return {deg:rayAng(fig, A.from) + size / 2, r:valR(size), text:text + '°', box:[text.length > 2 ? 52 : 44, 26], fill:'#fffbe8'}; };
+  const base = {fills:[{A:t.A, pat:'a'}, {A:t.B, pat:'b'}], arcs:[{A:t.A, r:34, color:'#8a6500'}, {A:t.B, r:46, color:'#0b6a8e'}],
+    labels:t.nums ? [label(t.A, String(t.nums[0])), label(t.B, String(t.nums[1]))] : []};
+  stage.innerHTML = `<p class="task">Какие это углы: ${nm(t.nA)} и ${nm(t.nB)}?</p>
+    <div class="legend"><span><i class="sw a"></i>${nm(t.nA)}</span><span><i class="sw b"></i>${nm(t.nB)}</span></div>
+    ${t.banner ? `<div class="badge">${t.banner}</div>` : ''}
+    <div id="boardHost"></div>
+    <div class="opts" id="ans"><button class="btn big block" data-a="adj" type="button">СМЕЖНЫЕ</button><button class="btn big block" data-a="vert" type="button">ВЕРТИКАЛЬНЫЕ</button><button class="btn big block" data-a="none" type="button">НИ ТО НИ ДРУГОЕ</button></div>
+    <div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = o => { host.innerHTML = boardHTML(drawFigure(fig, Object.assign({}, base, o))); };
+  paint({});
+  let locked = false;
+  const allRays = Array.from(new Set([t.A.from, t.A.to, t.B.from, t.B.to]));
+  $$('#ans .btn').forEach(b => b.addEventListener('click', () => {
+    if(locked) return;
+    const a = b.dataset.a, btns = $$('#ans .btn');
+    const hint = hint2(t, a);
+    const r = judge(gate, a === t.ans, {trap:hint.trap, hint:`<p>${hint.html}</p>`, reveal:`<p>${t.why}</p>`});
+    if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint({}); finishTask(t.whyShort); }
+    else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint({rayEm:hint.rays}); }
+    else{ locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(x.dataset.a === t.ans) x.classList.add('good'); }); paint({rayEm:allRays}); finishTask(null); }
+  }));
+};
+
+/* ---------- общие подписи на чертеже для режимов 3–5 ---------- */
+function sectorLabels(fig, o){
+  const L = [];
+  fig.sec.forEach((s, i) => {
+    if(s.size >= 180) return;
+    const mid = s.a0 + s.size / 2, v = o.values ? o.values[i] : undefined;
+    if(o.num) L.push({deg:mid, r:numR(s.size), text:String(o.num[i]), cls:'tag-n'});
+    if(v !== undefined) L.push({deg:mid, r:valR(s.size), text:v + '°', box:[v >= 100 ? 52 : 44, 26], fill:(o.cell && o.cell[i]) || '#fffbe8'});
+    else if(o.q && o.q.includes(i)) L.push({deg:mid, r:valR(s.size), text:'?', cls:'val q', box:[34, 26], fill:'#fff0b8'});
+    else if(o.empty && o.empty.includes(i)) L.push({deg:mid, r:valR(s.size), text:'', box:[46, 26], fill:'#ffffff'});
+  });
+  return L;
+}
+const arcsAll = fig => fig.sec.filter(s => s.size < 180).map(s => ({A:angOfSector(fig, s.i), r:29, color:'#444'}));
+const numInput = (id, label) => `<div class="field">${label || ''}<input id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Число в градусах"><span class="u">°</span></div>`;
+
+/* ---------- 11. режим 3: «Перенеси условие на рисунок» ---------- */
+GENS[3] = gen3;
+MOUNTS[3] = (t, stage) => t.kind === 'vals' ? mount3vals(t, stage) : mount3pair(t, stage);
+
+function rayNames(t, i){ const s = t.fig.sec[i]; return `${nm('O' + t.fig.rays[s.from].letter)} и ${nm('O' + t.fig.rays[s.to].letter)}`; }
+const whereIs = (t, i) => t.naming === 'num' ? `найди на чертеже дугу с цифрой ${t.num[i]}` : `он лежит между лучами ${rayNames(t, i)}`;
+
+function mount3vals(t, stage){
+  const fig = t.fig, gate = {};
+  let placed = {}, armed = null, sel = null, hover = -1, locked = false;
+  stage.innerHTML = `<p class="task">Перенеси условие на чертёж: впиши числа в нужные углы.</p>
+    <p class="lead">Считать ничего не нужно: пойми, какому углу принадлежит число и какие ещё углы ему равны.</p>
+    <div class="inset"><span class="px" style="font-size:10px">УСЛОВИЕ</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>
+    <div id="boardHost"></div>
+    <div class="steplab">ФИШКИ: НАЖМИ НА ФИШКУ И НА УГОЛ ИЛИ ПЕРЕТАЩИ</div><div class="tray" id="tray"></div>
+    <div id="manual"></div>
+    <div class="row" style="margin:12px 3px 0"><button class="btn big grow" id="bCheck" type="button">ПРОВЕРИТЬ</button><button class="btn" id="bClear" type="button">ОЧИСТИТЬ</button></div>
+    <div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = o => {
+    o = o || {};
+    const fills = [];
+    if(sel !== null) fills.push({A:angOfSector(fig, sel), pat:'sel'});
+    if(hover >= 0 && hover !== sel) fills.push({A:angOfSector(fig, hover), pat:'sel'});
+    (o.fills || []).forEach(f => fills.push(f));
+    const empty = fig.sec.map((s, i) => i).filter(i => placed[i] === undefined);
+    host.innerHTML = boardHTML(drawFigure(fig, {attrs:locked ? '' : 'class="tap"', fills, rayEm:o.rayEm, arcs:t.num ? arcsAll(fig) : [],
+      labels:sectorLabels(fig, {num:t.num, values:placed, empty, cell:o.cell})}));
+    if(!locked) $('svg', host).addEventListener('click', onBoard);
+  };
+  const sectorFromClient = ev => {
+    const svg = $('svg', host), r = svg.getBoundingClientRect();
+    if(ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return -1;
+    return sectorAtPoint(fig, (ev.clientX - r.left) * 360 / r.width, (ev.clientY - r.top) * 360 / r.height);
+  };
+  const renderTray = () => {
+    $('#tray').innerHTML = t.chips.map(v => `<button class="chip${armed === v ? ' arm' : ''}" data-v="${v}" type="button" aria-pressed="${armed === v}">${v}°</button>`).join('');
+    $$('#tray .chip').forEach(ch => {
+      const v = +ch.dataset.v;
+      ch.addEventListener('click', ev => { if(ev.detail === 0 && !locked){ armed = armed === v ? null : v; renderTray(); } });   // с клавиатуры
+      ch.addEventListener('pointerdown', e => {
+        if(locked) return;
+        e.preventDefault();
+        let moved = false, ghost = null; const x0 = e.clientX, y0 = e.clientY;
+        const move = ev => {
+          if(!moved && Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8){ moved = true; ghost = ch.cloneNode(true); ghost.classList.add('ghost'); document.body.appendChild(ghost); }
+          if(moved){ ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px'; const i = sectorFromClient(ev); if(i !== hover){ hover = i; paint(); } }
+        };
+        const up = ev => {
+          document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+          if(ghost) ghost.remove();
+          if(moved){ const i = sectorFromClient(ev); hover = -1; if(i >= 0) put(i, v); else paint(); }
+          else { armed = armed === v ? null : v; renderTray(); }
+        };
+        document.addEventListener('pointermove', move); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+      });
+    });
+  };
+  const showManual = () => {
+    const m = $('#manual');
+    if(sel === null){ m.innerHTML = ''; return; }
+    m.innerHTML = `<div class="qtext">Угол ${t.nmH[sel]} — впиши число:</div>
+      <div class="field"><input id="mval" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" autocomplete="off" aria-label="Число для выбранного угла"><span class="u">°</span>
+      <button class="btn" id="bPut" type="button">ВПИСАТЬ</button><button class="btn" id="bErase" type="button">СТЕРЕТЬ</button></div>`;
+    const inp = $('#mval'); if(placed[sel] !== undefined) inp.value = placed[sel];
+    const doPut = () => { const v = parseInt(inp.value, 10); if(!isNaN(v) && v > 0 && v < 361){ placed[sel] = v; sel = null; paint(); showManual(); } };
+    $('#bPut').addEventListener('click', doPut);
+    inp.addEventListener('keydown', e => { if(e.key === 'Enter') doPut(); });
+    $('#bErase').addEventListener('click', () => { delete placed[sel]; sel = null; paint(); showManual(); });
+  };
+  function put(i, v){ placed[i] = v; sel = null; hover = -1; paint(); showManual(); }
+  function onBoard(e){
+    if(locked) return;
+    const xy = svgXY(e.currentTarget, e), i = sectorAtPoint(fig, xy[0], xy[1]);
+    if(i < 0) return;
+    if(armed !== null) put(i, armed);
+    else { sel = sel === i ? null : i; paint(); showManual(); }
+  }
+  renderTray(); paint();
+
+  const hint3 = iss => {
+    const i = iss.i, nmI = t.nmH[i], A = angOfSector(fig, i), rays = [A.from, A.to];
+    if(iss.kind === 'wrongPlace') return {trap:'wrongPlace', html:`<p>В угол ${nmI} поставлено ${iss.got}°, но по условию там другое число.</p><p>Проверь, какому углу относится каждое число: ${whereIs(t, i)}.</p>`, fills:[{A, pat:'bad'}], rays};
+    if(iss.kind === 'extra'){
+      // нашли «источник» этого числа; смежность проверяем по лучам, а не по соседству номеров
+      const nb = Object.keys(t.expected).map(Number).find(j => t.expected[j] === iss.got && relation(fig, A, angOfSector(fig, j)) === 'adj');
+      return nb !== undefined
+        ? {trap:'eqAdj', html:`<p>${nmI} — смежный с ${t.nmH[nb]}: смежные углы не равны, вместе они дают 180°.</p><p>Считать мы пока не будем — оставь этот угол пустым.</p>`, fills:[{A, pat:'bad'}, {A:angOfSector(fig, nb), pat:'a'}], rays}
+        : {trap:'extraNum', html:`<p>Для угла ${nmI} числа в условии нет, и равным известному он не является.</p><p>Оставь его пустым: считать мы пока не будем.</p>`, fills:[{A, pat:'bad'}], rays};
+    }
+    if(iss.kind === 'missGiven') return {trap:'missGiven', html:`<p>Не все числа из условия перенесены на чертёж.</p><p>Проверь: по условию ${nmI} = ${t.expected[i]}°. Где этот угол? ${whereIs(t, i)}.</p>`, fills:[{A, pat:'a'}], rays};
+    const g = (i + t.half) % fig.n;           // skipVert: угол напротив уже известного
+    return {trap:'skipVert', html:`<p>Есть ещё угол, значение которого уже известно, считать не нужно.</p><p>Посмотри на угол, который лежит «напротив» ${t.nmH[g]}: вертикальные углы равны.</p>`, fills:[{A:angOfSector(fig, g), pat:'a'}, {A, pat:'b'}], rays:[]};
+  };
+  const reveal3 = () => {
+    const lines = t.givens.map(g => `<li>${t.nmH[g]} = ${t.expected[g]}° — по условию.</li><li>${t.nmH[(g + t.half) % fig.n]} вертикальный к ${t.nmH[g]}, поэтому тоже ${t.expected[g]}°.</li>`).join('');
+    return `<p>Вот как надо:</p><ul style="margin:0;padding-left:20px">${lines}</ul><p>Остальные углы смежные с известными: их значения придётся считать, сейчас они остаются пустыми.</p>`;
+  };
+  $('#bClear').addEventListener('click', () => { if(locked) return; placed = {}; sel = null; armed = null; renderTray(); paint(); showManual(); });
+  $('#bCheck').addEventListener('click', () => {
+    if(locked) return;
+    const issues = check3vals(t, placed), first = issues[0];
+    if(!first && Object.keys(placed).length === 0) { setFb('<p>Сначала впиши числа из условия в углы на чертеже.</p>', 'hint'); return; }
+    const hint = first ? hint3(first) : null;
+    const r = judge(gate, !first, {trap:hint && hint.trap, hint:hint && hint.html, reveal:reveal3()});
+    if(r === 'right'){ locked = true; sel = null; armed = null; renderTray(); paint({cell:Object.fromEntries(Object.keys(placed).map(k => [k, '#c8f5b0']))}); $('#manual').innerHTML = ''; finishTask('Всё верно: числа из условия стоят в своих углах, и вертикальные углы подписаны равными.'); }
+    else if(r === 'hint'){ paint({fills:hint.fills, rayEm:hint.rays}); }
+    else{ locked = true; sel = null; armed = null; renderTray(); placed = Object.assign({}, t.expected); paint({cell:Object.fromEntries(Object.keys(placed).map(k => [k, '#c8f5b0'])), fills:t.givens.map(g => ({A:angOfSector(fig, g), pat:'ok'}))}); $('#manual').innerHTML = ''; finishTask(null); }
+  });
+}
+
+function mount3pair(t, stage){
+  const fig = t.fig, g1 = {}, g2 = {}, need = t.pair;
+  let sel = [], phase = 1, locked = false;
+  const [i, j] = need, A = angOfSector(fig, i), B = angOfSector(fig, j);
+  const probe = {fig, A, B, nA:t.nmP[i], nB:t.nmP[j], nums:null, ans:t.rel, kind:t.rel};
+  stage.innerHTML = `<p class="task">Перенеси условие на чертёж: найди углы из условия.</p>
+    <div class="inset"><span class="px" style="font-size:10px">УСЛОВИЕ</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>
+    <p class="lead" id="q1">Нажми на оба угла, о которых говорится в условии, затем на «ПРОВЕРИТЬ».</p>
+    <div id="boardHost"></div><div id="q2"></div>
+    <div class="row" style="margin:12px 3px 0" id="chkRow"><button class="btn big grow" id="bCheck" type="button">ПРОВЕРИТЬ</button></div>
+    <div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = o => {
+    o = o || {};
+    const fills = phase === 1 ? sel.map(k => ({A:angOfSector(fig, k), pat:'sel'})) : [{A, pat:o.pat1 || 'a'}, {A:B, pat:o.pat2 || 'b'}];
+    host.innerHTML = boardHTML(drawFigure(fig, {attrs:phase === 1 && !locked ? 'class="tap"' : '', fills, rayEm:o.rayEm, arcs:t.num ? arcsAll(fig) : [], labels:sectorLabels(fig, {num:t.num})}));
+    if(phase === 1 && !locked) $('svg', host).addEventListener('click', e => {
+      const xy = svgXY(e.currentTarget, e), k = sectorAtPoint(fig, xy[0], xy[1]);
+      if(k < 0) return;
+      sel = sel.includes(k) ? sel.filter(x => x !== k) : sel.concat([k]); paint();
+    });
+  };
+  paint();
+  const bothRays = [A.from, A.to, B.from, B.to];
+  $('#bCheck').addEventListener('click', () => {
+    if(locked || phase !== 1) return;
+    const ok = sel.length === 2 && need.every(k => sel.includes(k));
+    const names = `${t.nmH[i]} и ${t.nmH[j]}`;
+    const hint = sel.length !== 2 ? `<p>В условии названы два угла: ${names}. Выбери оба.</p>`
+      : `<p>Прочитай условие ещё раз: там названы ${names}. Найди именно их: ${t.naming === 'num' ? `на чертеже это дуги с цифрами ${t.num[i]} и ${t.num[j]}` : `они лежат между лучами ${rayNames(t, i)} и ${rayNames(t, j)}`}.</p>`;
+    const r = judge(g1, ok, {trap:'pickWrong', hint, reveal:`<p>В условии названы ${names} — вот они на чертеже.</p>`});
+    if(r === 'hint') paint({rayEm:t.naming === 'let' ? bothRays : []});
+    else{ phase = 2; sel = []; if(r === 'shown') locked = false; paint(); startPhase2(r === 'shown'); }
+  });
+  function startPhase2(wasShown){
+    $('#chkRow').innerHTML = '';
+    $('#q1').innerHTML = `Что можно сказать про ${t.nmH[i]} и ${t.nmH[j]}?`;
+    if(!wasShown) setFb('<p>Углы найдены верно.</p>', 'ok');
+    $('#q2').innerHTML = `<div class="opts"><button class="btn block" data-a="vert" type="button">РАВНЫ: ЭТО ВЕРТИКАЛЬНЫЕ УГЛЫ</button><button class="btn block" data-a="adj" type="button">ВМЕСТЕ 180°: ЭТО СМЕЖНЫЕ УГЛЫ</button><button class="btn block" data-a="none" type="button">СВЯЗИ НЕТ: НЕ СМЕЖНЫЕ И НЕ ВЕРТИКАЛЬНЫЕ</button></div>`;
+    $$('#q2 .btn').forEach(b => b.addEventListener('click', () => {
+      if(locked) return;
+      const a = b.dataset.a, h = hint2(probe, a), btns = $$('#q2 .btn');
+      const r = judge(g2, a === t.rel, {trap:'relPick', hint:`<p>${h.html}</p>`, reveal:`<p>${why2(probe)}</p>`});
+      if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint(); finishTask(whyShort2(probe)); }
+      else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint({rayEm:h.rays}); }
+      else{ locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(x.dataset.a === t.rel) x.classList.add('good'); }); paint({rayEm:bothRays}); finishTask(null); }
+    }));
+  }
+}
+
+/* ---------- 12. режимы 4 и 5: решение по шагам / «как в учебнике» ---------- */
+GENS[4] = gen4;
+GENS[5] = gen5;
+MOUNTS[4] = (t, stage) => mountSteps(t, stage, {});
+MOUNTS[5] = (t, stage) => mount5(t, stage);
+
+const taskBox = t => `<div class="inset"><span class="px" style="font-size:10px">ЗАДАЧА</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>`;
+function problemBoard(t, known, o){
+  o = o || {};
+  const fig = t.fig;
+  return boardHTML(drawFigure(fig, {fills:o.fills || [], rayEm:o.rayEm, arcs:t.num ? arcsAll(fig) : [],
+    labels:sectorLabels(fig, {num:t.num, values:known, q:known[t.target] === undefined ? [t.target] : []})}));
+}
+const knownStart = t => { const k = {}; (t.known0 || []).forEach(x => k[x.sec] = x.v); return k; };
+
+/* Решение по шагам: «Какие это углы?» → «Какое правило?» → «Чему равен угол?» */
+function mountSteps(t, stage, o){
+  const known = knownStart(t);
+  let si = 0, qi = 0, gate = {}, rayEm = [], locked = false;
+  stage.innerHTML = `${o.note ? `<div class="fb show"><span class="tag">РАЗБОР</span>${o.note}</div>` : ''}${taskBox(t)}
+    <div id="boardHost"></div><div class="steplab" id="stepLab"></div><div class="qtext" id="qText"></div><div id="qAns"></div>
+    <div id="fb"></div><ul class="log" id="log"></ul><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = fills => { host.innerHTML = problemBoard(t, known, {fills:fills || (t.steps[si] ? t.steps[si].angles : []), rayEm}); };
+  const addLog = (html, shown) => { $('#log').insertAdjacentHTML('beforeend', `<li class="${shown ? 'w' : ''}">${html}</li>`); };
+  const place = q => q.place.forEach(p => { known[p.sec] = p.v; });
+  function next(){
+    qi++;
+    if(qi >= t.steps[si].qs.length){ si++; qi = 0; }
+    if(si >= t.steps.length) return complete();
+    showQ();
+  }
+  function complete(){
+    locked = true; rayEm = []; paint([]);
+    $('#stepLab').textContent = ''; $('#qText').innerHTML = ''; $('#qAns').innerHTML = '';
+    finishTask(`Ответ: ${t.C.html(t.target)} = ${t.answer}°.`);
+  }
+  function afterQuestion(q, how){
+    addLog(how === 'shown' ? `Разбор: ${q.full}` : q.short, how === 'shown');
+    if(q.kind === 'num') place(q);
+    if(how === 'right'){ next(); return; }
+    paint(); $('#qAns').insertAdjacentHTML('beforeend', `<div class="row" style="margin:12px 3px 0"><button class="btn big grow" id="bGo" type="button">ПОНЯТНО, ДАЛЬШЕ</button></div>`);
+    $('#bGo').addEventListener('click', () => { playSfx('click'); setFb(''); next(); });
+    $('#bGo').focus({preventScroll:true});
+  }
+  function showQ(){
+    const q = t.steps[si].qs[qi]; gate = {}; rayEm = []; locked = false; setFb(''); paint();
+    $('#stepLab').textContent = `ШАГ ${si + 1} ИЗ ${t.steps.length}`;
+    $('#qText').innerHTML = q.ask;
+    if(q.kind === 'choice'){
+      $('#qAns').innerHTML = `<div class="opts">${q.opts.map(x => `<button class="btn block" data-id="${x.id}" type="button">${esc(x.label)}</button>`).join('')}</div>`;
+      $$('#qAns .btn').forEach(b => b.addEventListener('click', () => {
+        if(locked) return;
+        const id = b.dataset.id, h = q.hint(id), btns = $$('#qAns .btn');
+        const r = judge(gate, id === q.ans, {trap:h.trap, hint:`<p>${h.html}</p>`, reveal:`<p>${q.full}</p>`});
+        if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); afterQuestion(q, 'right'); }
+        else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; rayEm = h.rays || []; paint(); }
+        else{ locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(x.dataset.id === q.ans) x.classList.add('good'); }); rayEm = h.rays || []; afterQuestion(q, 'shown'); }
+      }));
+    }else{
+      $('#qAns').innerHTML = `<div class="field"><input id="num" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Ответ в градусах"><span class="u">°</span><button class="btn big" id="bOk" type="button">ОТВЕТИТЬ</button></div>`;
+      const inp = $('#num'), send = () => {
+        if(locked) return;
+        const v = parseInt(inp.value, 10);
+        if(isNaN(v)){ setFb('<p>Впиши число — например, 65.</p>', 'hint'); return; }
+        const w = q.wrongs.find(x => x.v === v);
+        const r = judge(gate, v === q.ans, {trap:'numWrong', hint:`${w ? `<p>${w.msg}</p>` : ''}<p>${q.hint}</p>`, reveal:`<p>${q.full}</p>`});
+        if(r === 'right'){ locked = true; inp.disabled = true; $('#bOk').disabled = true; afterQuestion(q, 'right'); }
+        else if(r === 'hint'){ inp.select(); }
+        else{ locked = true; inp.disabled = true; $('#bOk').disabled = true; afterQuestion(q, 'shown'); }
+      };
+      $('#bOk').addEventListener('click', send);
+      inp.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
+      if(!o.noFocus) inp.focus({preventScroll:true});
+    }
+  }
+  showQ();
+}
+
+/* «Как в учебнике»: задача целиком, только ответ. Ошибка → подсказка, вторая ошибка → разбивка на шаги режима 4. */
+function mount5(t, stage){
+  const gate = {}, known = knownStart(t);
+  let locked = false;
+  stage.innerHTML = `${taskBox(t)}<div id="boardHost">${problemBoard(t, known)}</div>
+    ${numInput('ans', `<span class="px" style="font-size:10px;align-self:center">ОТВЕТ</span>`)}
+    <div class="row" style="margin:0 3px"><button class="btn big grow" id="bOk" type="button">ПРОВЕРИТЬ</button></div>
+    <div id="fb"></div><div id="more"></div><div id="nextbar"></div>`;
+  const inp = $('#ans');
+  const toSteps = note => { locked = true; Run.shown = true; mountSteps(t, stage, {note, noFocus:false}); stage.scrollIntoView({block:'start', behavior:'smooth'}); };
+  const send = () => {
+    if(locked) return;
+    const v = parseInt(inp.value, 10);
+    if(isNaN(v)){ setFb('<p>Впиши число — например, 65.</p>', 'hint'); return; }
+    const w = t.wrongs.find(x => x.v === v);
+    const r = judge(gate, v === t.answer, {trap:'numWrong', hint:`${w ? `<p>${w.msg}</p>` : ''}<p>${t.hint5}</p>`, reveal:'<p>Давай разберём эту задачу по шагам.</p>'});
+    if(r === 'right'){ locked = true; inp.disabled = true; $('#bOk').disabled = true; $('#more').innerHTML = ''; finishTask(`${t.C.html(t.target)} = ${t.answer}°. ${t.steps[t.steps.length - 1].qs.slice(-1)[0].short}`); }
+    else if(r === 'hint'){
+      inp.select();
+      $('#more').innerHTML = `<div class="row" style="margin:12px 3px 0"><button class="btn grow" id="bSteps" type="button">РАЗБИТЬ НА ШАГИ</button></div>`;
+      $('#bSteps').addEventListener('click', () => toSteps('<p>Решим эту же задачу по шагам: на каждом шаге один вопрос.</p>'));
+    }else toSteps('<p>Решим эту же задачу по шагам: на каждом шаге один вопрос.</p>');
+  };
+  $('#bOk').addEventListener('click', send);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
+  inp.focus({preventScroll:true});
+}
+
+/* ---------- 13. страница «Для учителя» ---------- */
+function storageOK(){
+  try{ const k = LS_KEY + '-t'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; }catch(e){ return false; }
+}
+function renderTeacher(){
+  App.screen = 'teacher';
+  const sum = m => S.modes[m].self + S.modes[m].hint + S.modes[m].shown;
+  let h = `<section class="win"><div class="row between"><h1 style="margin:0">ДЛЯ УЧИТЕЛЯ</h1><button class="btn" id="tBack" type="button">МЕНЮ</button></div>
+    <p class="lead" style="margin-top:12px">Статистика ученика на этом устройстве. «Сам» — верно с первой попытки; «с подсказкой» — верно после подсказки; «показано» — пришлось показать решение.</p>
+    ${storageOK() ? '' : '<div class="fb hint"><span class="tag">ВНИМАНИЕ</span><p>Браузер не даёт сохранять данные (приватный режим или запрет). Тренажёр работает, но прогресс исчезнет при закрытии страницы.</p></div>'}</section>
+    <section class="win"><h2>ПО РЕЖИМАМ</h2>`;
+  for(let m = 1; m <= 5; m++){
+    const st = S.modes[m], n = sum(m), help = st.hint + st.shown;
+    h += `<div class="srow"><div class="nm">Глубина ${m}. ${esc(MODES[m].name)} ${st.passed ? '<span class="px" style="font-size:9px">· ПРОЙДЕНО</span>' : isOpen(m) ? '' : '<span class="px" style="font-size:9px">· ЗАКРЫТО</span>'}</div>
+      <div class="c"><b>${n}</b>задач</div><div class="c"><b>${st.self}</b>сам</div><div class="c"><b>${st.hint}</b>с подсказкой</div><div class="c"><b>${st.shown}</b>показано</div>
+      <div class="bar" title="Доля задач, где понадобилась помощь"><i style="width:${n ? Math.round(help * 100 / n) : 0}%"></i></div>
+      <div class="c" style="grid-column:1/-1">${n ? `Помощь понадобилась в ${Math.round(help * 100 / n)}% задач.` : 'Пока нет решённых задач.'} ${st.round.n ? `Текущий раунд: ${st.round.ok} верных из ${st.round.n}.` : ''}</div></div>`;
+  }
+  h += `</section>`;
+  const types = Object.keys(S.types).map(k => ({k, x:S.types[k], rate:(S.types[k].hint + 2 * S.types[k].shown) / S.types[k].n}))
+    .filter(r => r.x.hint + r.x.shown > 0).sort((a, b) => b.rate - a.rate || b.x.n - a.x.n).slice(0, 8);
+  h += `<section class="win"><h2>ТИПЫ ЗАДАЧ, ГДЕ БОЛЬШЕ ВСЕГО ОШИБОК</h2>`;
+  h += types.length ? `<ol class="err" style="padding-left:22px;margin:0">${types.map(r =>
+      `<li><b>${esc(TYPE_TITLES[r.k] || r.k)}</b><br><span class="muted">задач: ${r.x.n} · сам: ${r.x.self} · с подсказкой: ${r.x.hint} · показано: ${r.x.shown} · неверных попыток: ${r.x.err}</span><span class="meter" style="width:${Math.min(100, Math.round(r.rate * 50))}%"></span></li>`).join('')}</ol>`
+    : '<p class="muted">Ошибок пока нет — или ещё нет решённых задач.</p>';
+  h += `</section>`;
+  const traps = Object.keys(S.traps).map(k => [k, S.traps[k]]).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  h += `<section class="win"><h2>ЧАСТЫЕ ОШИБКИ</h2>${traps.length ? `<ol class="err" style="padding-left:22px;margin:0">${traps.map(a => `<li>${esc(TRAP_TITLES[a[0]] || a[0])} <b>×${a[1]}</b></li>`).join('')}</ol>` : '<p class="muted">Пока не накопилось.</p>'}</section>
+    <section class="win"><h2>ИНСТРУМЕНТЫ</h2><div class="opts">
+      <button class="btn block" id="tOpen" type="button">${S.allOpen ? 'ВЕРНУТЬ ЗАМКИ НА ШАХТАХ' : 'ОТКРЫТЬ ВСЕ ШАХТЫ'}</button>
+      <button class="btn block" id="tCheck" type="button">САМОПРОВЕРКА МАТЕМАТИКИ (200 ЗАДАЧ)</button>
+      <button class="btn block" id="tReset" type="button">СБРОСИТЬ ПРОГРЕСС</button></div>
+      <pre class="rep" id="rep" hidden></pre></section>`;
+  $('#main').innerHTML = h;
+  $('#tBack').addEventListener('click', () => go('home'));
+  $('#tOpen').addEventListener('click', () => { S.allOpen = !S.allOpen; saveState(); renderTeacher(); });
+  let armed = false, timer = 0;
+  $('#tReset').addEventListener('click', e => {
+    if(!armed){ armed = true; e.currentTarget.textContent = 'ТОЧНО СБРОСИТЬ? НАЖМИ ЕЩЁ РАЗ'; timer = setTimeout(() => { armed = false; e.currentTarget.textContent = 'СБРОСИТЬ ПРОГРЕСС'; }, 4000); return; }
+    clearTimeout(timer); resetState(); renderHotbar(-1); renderTeacher();
+  });
+  $('#tCheck').addEventListener('click', () => {
+    const rep = $('#rep'); rep.hidden = false;
+    rep.textContent = typeof selfCheck === 'function' ? formatCheck(selfCheck(200)) : 'Самопроверка недоступна.';
+    rep.scrollIntoView({block:'nearest', behavior:'smooth'});
+  });
+}
+
+/* ---------- запуск ---------- */
+if(typeof document !== 'undefined' && document.getElementById('main')) boot();
+</script>
+</body>
+</html>
