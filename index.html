@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Шахта углов — тренажёр по геометрии, 7 класс</title>
-<meta name="description" content="Тренажёр по геометрии для 7 класса: смежные и вертикальные углы. Чертежи каждый раз новые.">
+<title>Шахта геометрии — тренажёр, 7 класс</title>
+<meta name="description" content="Тренажёр по геометрии для 7 класса: смежные и вертикальные углы, треугольники. Чертежи каждый раз новые.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@1,500;1,700&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -64,6 +64,7 @@ button{font:inherit}
 .logo{font-family:var(--px);font-size:13px;line-height:1.45;color:#fff;text-shadow:2px 2px 0 #1b2b45,-1px -1px 0 #1b2b45;cursor:pointer;background:none;border:0;padding:6px 0;text-align:left}
 .logo small{display:block;font-size:8px;margin-top:4px;color:#fff}
 .tools{display:flex;gap:6px;flex-wrap:nowrap}
+@media (max-width:420px){.logo{font-size:12px}.logo small{font-size:7px}}
 .wrap{max-width:780px;margin:0 auto;padding:6px 12px 110px}
 
 /* ---------- окно-инвентарь ---------- */
@@ -225,7 +226,7 @@ noscript{display:block;padding:20px;background:#fff;font:18px var(--txt)}
   <div class="deep" id="deep"></div>
 </div>
 <header class="top">
-  <button class="logo" id="logo" type="button" aria-label="На главную">ШАХТА УГЛОВ<small>СМЕЖНЫЕ И ВЕРТИКАЛЬНЫЕ</small></button>
+  <button class="logo" id="logo" type="button" aria-label="На главную">ШАХТА ГЕОМЕТРИИ<small>УГЛЫ И ТРЕУГОЛЬНИКИ</small></button>
   <div class="tools">
     <button class="btn ibtn" id="bSound" type="button" aria-label="Звук" title="Звук"><img alt=""></button>
     <button class="btn ibtn" id="bTheme" type="button" aria-label="Тема" title="День / ночь"><img alt=""></button>
@@ -275,8 +276,22 @@ const MODES = [null,
   {id:2, name:'Какие это углы?',     desc:'Смежные, вертикальные или ни то ни другое'},
   {id:3, name:'Перенеси условие',    desc:'Условие из учебника → числа на чертеже'},
   {id:4, name:'Реши по шагам',       desc:'Задача в 2–3 шага с вопросами'},
-  {id:5, name:'Как в учебнике',      desc:'Задача целиком, только ответ'}
+  {id:5, name:'Как в учебнике',      desc:'Задача целиком, только ответ'},
+  {id:6, name:'Найди элемент',       desc:'Угол, сторона, треугольник по буквам'},
+  {id:7, name:'Что это такое?',      desc:'Медиана, биссектриса, высота; вид треугольника'},
+  {id:8, name:'Перенеси условие',    desc:'Условие из учебника → пометки на чертеже'},
+  {id:9, name:'Реши по шагам',       desc:'Задача в 2–3 шага с вопросами'},
+  {id:10, name:'Как в учебнике',     desc:'Задача целиком, только ответ'}
 ];
+/* темы: у каждой свои 5 шахт; первая шахта темы открыта сразу, дальше — по правилу «8 из 10» */
+const TOPICS = [
+  {id:'ang', name:'Смежные и вертикальные', short:'УГЛЫ', first:1, last:5},
+  {id:'tri', name:'Треугольники', short:'ТРЕУГОЛЬНИКИ', first:6, last:10}
+];
+const topicOf = m => m >= 6 ? TOPICS[1] : TOPICS[0];
+const depthOf = m => m - topicOf(m).first + 1;
+const isLastOfTopic = m => m === topicOf(m).last;
+const MODE_COUNT = 10;
 const TYPE_TITLES = {};      // ключ типа задачи -> человекочитаемое название (дополняется ниже)
 const TRAP_TITLES = {};      // ключ типичной ошибки -> описание
 
@@ -285,7 +300,7 @@ const LS_KEY = 'shakhta-uglov-v1';
 function newModeState(){ return {self:0, hint:0, shown:0, rounds:0, passed:false, round:{n:0, ok:0, miss:0}}; }
 function defState(){
   return {v:1, sound:false, theme:null, allOpen:false, selfTotal:0, mined:0,
-          modes:{1:newModeState(), 2:newModeState(), 3:newModeState(), 4:newModeState(), 5:newModeState()},
+          modes:(() => { const m = {}; for(let i = 1; i <= 10; i++) m[i] = newModeState(); return m; })(),
           types:{}, traps:{}};
 }
 let S = defState();
@@ -297,13 +312,14 @@ function loadState(){
     if(!o || o.v !== 1) return;
     const d = defState();
     S = Object.assign(d, o);
-    for(let m = 1; m <= 5; m++) S.modes[m] = Object.assign(newModeState(), (o.modes || {})[m] || {}, {round:Object.assign({n:0, ok:0, miss:0}, ((o.modes || {})[m] || {}).round || {})});
+    S.modes = {};
+    for(let m = 1; m <= 10; m++) S.modes[m] = Object.assign(newModeState(), (o.modes || {})[m] || {}, {round:Object.assign({n:0, ok:0, miss:0}, ((o.modes || {})[m] || {}).round || {})});
     S.types = o.types || {}; S.traps = o.traps || {};
   }catch(e){ /* без localStorage всё работает, просто прогресс не сохранится */ }
 }
 function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
 function resetState(){ S = defState(); saveState(); }
-const isOpen = m => m === 1 || S.allOpen || !!S.modes[m - 1].passed;
+const isOpen = m => m === topicOf(m).first || S.allOpen || !!S.modes[m - 1].passed;
 
 /* ---------- 4. учёт результатов ---------- */
 function statOf(type){ return S.types[type] || (S.types[type] = {n:0, self:0, hint:0, shown:0, err:0}); }
@@ -473,7 +489,7 @@ const pointAngle = (x, y) => mod360(Math.atan2(CY - y, x - CX) * 180 / Math.PI);
 
 /* ---------- текстовые помощники ---------- */
 /* запись угла в тексте: вершина в середине, шрифт с засечками */
-const nm = str => `<span class="m">${esc(str).replace('∠', '<span class="ang">∠</span>')}</span>`;
+const nm = str => `<span class="m">${esc(str).replace('∠', '<span class="ang">∠</span>').replace('△', '<span class="ang">△</span>')}</span>`;
 const nn = k => `<span class="m n"><span class="ang">∠</span>${k}</span>`;      // ∠1
 const deg = v => v + '°';
 
@@ -801,7 +817,7 @@ function mkQRule(truth){
     hint:c => ({html:H[truth][c], rays:[], trap:'rule_' + truth}), short:S[truth], full:S[truth]};
 }
 function mkQCustom(ask, opts, ans, hints, short){
-  return {id:'layout', kind:'choice', ask, opts, ans, hint:c => ({html:hints[c], rays:[], trap:'layout'}), short, full:short};
+  return {id:'layout', kind:'choice', ask, opts:shuffle(opts), ans, hint:c => ({html:hints[c], rays:[], trap:'layout'}), short, full:short};
 }
 function mkQNum(ask, ans, o){
   return {id:'num', kind:'num', ask, ans, label:o.label || '', hint:o.hint, wrongs:o.wrongs || [], short:o.short, full:o.full || o.short, place:o.place || []};
@@ -1156,8 +1172,8 @@ function selfCheck(N, seed){
 }
 function formatCheck(R){
   const L = [];
-  L.push('САМОПРОВЕРКА МАТЕМАТИКИ');
-  L.push(`Сгенерировано задач: ${R.total} (по режимам: ${[1, 2, 3, 4, 5].map(m => m + ':' + (R.counts[m] || 0)).join(', ')}), зерно ${R.seed}`);
+  L.push('САМОПРОВЕРКА МАТЕМАТИКИ: ' + (R.topic === 'tri' ? 'ТРЕУГОЛЬНИКИ' : 'СМЕЖНЫЕ И ВЕРТИКАЛЬНЫЕ УГЛЫ'));
+  L.push(`Сгенерировано задач: ${R.total} (по режимам: ${Object.keys(R.counts).map(m => m + ':' + R.counts[m]).join(', ')}), зерно ${R.seed}`);
   L.push(`Выполнено проверок: ${R.checkCount}, расхождений: ${R.bad}`);
   L.push('');
   Object.keys(R.checks).forEach(k => { const c = R.checks[k]; L.push(`${c.bad ? '[!!]' : '[ok]'} ${k}: ${c.ok + c.bad}${c.bad ? ', ошибок ' + c.bad : ''}`); });
@@ -1360,26 +1376,30 @@ function go(screen, mode){
   window.scrollTo(0, 0);
 }
 function renderHome(){
-  const done = MODES.slice(1).filter((m, i) => S.modes[i + 1].passed).length;
-  const tot = [1, 2, 3, 4, 5].reduce((a, m) => ({s:a.s + S.modes[m].self, h:a.h + S.modes[m].hint + S.modes[m].shown}), {s:0, h:0});
-  let h = `<section class="win"><h1>ШАХТА УГЛОВ</h1>
-    <p class="lead">Копай вглубь: чем глубже шахта, тем хитрее задачи про <b>смежные</b> и <b>вертикальные</b> углы. Чтобы открыть следующую шахту, реши <b>${NEED} задач из ${ROUND}</b>.</p>
-    <div class="inset"><span class="cnt">РЕШЕНО САМ: <b>${tot.s}</b> &nbsp; С ПОДСКАЗКОЙ: <b>${tot.h}</b> &nbsp; БЛОКОВ: <b>${S.mined}</b></span></div></section>
-    <section class="win"><h2>ВЫБЕРИ ШАХТУ</h2>`;
+  const done = Array.from({length:MODE_COUNT}, (_, i) => i + 1).filter(m => S.modes[m].passed).length;
+  const tot = Array.from({length:MODE_COUNT}, (_, i) => i + 1).reduce((a, m) => ({s:a.s + S.modes[m].self, h:a.h + S.modes[m].hint + S.modes[m].shown}), {s:0, h:0});
+  let h = `<section class="win"><h1>ШАХТА ГЕОМЕТРИИ</h1>
+    <p class="lead">Копай вглубь: чем глубже шахта, тем хитрее задачи. В каждой теме пять шахт. Чтобы открыть следующую, реши <b>${NEED} задач из ${ROUND}</b>.</p>
+    <div class="inset"><span class="cnt">РЕШЕНО САМ: <b>${tot.s}</b> &nbsp; С ПОДСКАЗКОЙ: <b>${tot.h}</b> &nbsp; БЛОКОВ: <b>${S.mined}</b></span></div></section>`;
   const ics = ['coal', 'iron', 'gold', 'diamond', 'deep'];
-  for(let m = 1; m <= 5; m++){
-    const open = isOpen(m), st = S.modes[m], pass = st.passed;
-    const status = !open ? `<img src="${TEX.lock}" width="26" height="26" alt="закрыто"><br>ЗАКРЫТО`
-      : pass ? `<img src="${TEX.checkG}" width="26" height="26" alt="пройдено"><br>ПРОЙДЕНО` : (st.round.n ? `${st.round.ok}/${NEED}` : 'ОТКРЫТО');
-    h += `<button class="btn mine${open ? '' : ' lock'}" data-m="${m}" type="button" aria-label="Глубина ${m}. ${MODES[m].name}. ${open ? (pass ? 'Пройдено' : 'Открыто') : 'Закрыто'}">
-      <span class="ic"><img src="${TEX[ics[m - 1]]}" alt=""></span>
-      <span class="grow"><span class="dep">ГЛУБИНА ${m}</span><span class="nm">${MODES[m].name.toUpperCase()}</span><span class="ds">${esc(MODES[m].desc)}</span></span>
-      <span class="st">${status}</span></button>`;
-  }
-  h += `</section><section class="win"><h2>КАК ЭТО РАБОТАЕТ</h2>
+  TOPICS.forEach(tp => {
+    const passed = Array.from({length:5}, (_, i) => tp.first + i).filter(m => S.modes[m].passed).length;
+    h += `<section class="win"><h2>${tp.short}: ${esc(tp.name.toUpperCase())}</h2><p class="muted" style="margin:0 0 14px">Пройдено шахт: ${passed} из 5</p>`;
+    for(let m = tp.first; m <= tp.last; m++){
+      const open = isOpen(m), st = S.modes[m], pass = st.passed, d = depthOf(m);
+      const status = !open ? `<img src="${TEX.lock}" width="26" height="26" alt="закрыто"><br>ЗАКРЫТО`
+        : pass ? `<img src="${TEX.checkG}" width="26" height="26" alt="пройдено"><br>ПРОЙДЕНО` : (st.round.n ? `${st.round.ok}/${NEED}` : 'ОТКРЫТО');
+      h += `<button class="btn mine${open ? '' : ' lock'}" data-m="${m}" type="button" aria-label="${tp.name}. Глубина ${d}. ${MODES[m].name}. ${open ? (pass ? 'Пройдено' : 'Открыто') : 'Закрыто'}">
+        <span class="ic"><img src="${TEX[ics[d - 1]]}" alt=""></span>
+        <span class="grow"><span class="dep">ГЛУБИНА ${d}</span><span class="nm">${MODES[m].name.toUpperCase()}</span><span class="ds">${esc(MODES[m].desc)}</span></span>
+        <span class="st">${status}</span></button>`;
+    }
+    h += `</section>`;
+  });
+  h += `<section class="win"><h2>КАК ЭТО РАБОТАЕТ</h2>
     <ul class="muted" style="margin:0;padding-left:20px"><li>Ошибся — получишь подсказку на один шаг. Со второй ошибки покажем решение.</li>
     <li>Каждые 5 верных ответов <b>без подсказки</b> — добыт блок: уголь, железо, золото, алмаз.</li>
-    <li>Прогресс хранится на этом устройстве. ${done} из 5 шахт пройдено.</li></ul></section>`;
+    <li>Прогресс хранится на этом устройстве. ${done} из ${MODE_COUNT} шахт пройдено.</li></ul></section>`;
   $('#main').innerHTML = h;
   $$('.mine').forEach(b => b.addEventListener('click', () => { playSfx('click'); go('mode', +b.dataset.m); }));
 }
@@ -1424,12 +1444,12 @@ function updateXp(){
   $('#cnt').innerHTML = `САМ: <b>${m.self}</b> &nbsp; С ПОДСКАЗКОЙ: <b>${m.hint + m.shown}</b>`;
 }
 function startMode(mode){
-  if(!isOpen(mode)){ toast(`Сначала пройди глубину ${mode - 1}: нужно ${NEED} верных из ${ROUND}`); App.screen = 'home'; return; }
+  if(!isOpen(mode)){ toast(`Сначала пройди глубину ${depthOf(mode) - 1}: нужно ${NEED} верных из ${ROUND}`); App.screen = 'home'; return; }
   const r = S.modes[mode].round;
   if(r.ok >= NEED || r.miss > ROUND - NEED) newRound(mode);
   App.screen = 'mode'; App.mode = mode;
   $('#main').innerHTML = `<section class="win" id="card">
-    <div class="row between"><div><span class="px" style="font-size:10px">ГЛУБИНА ${mode}</span><h2 style="margin:6px 0 0">${MODES[mode].name.toUpperCase()}</h2></div><button class="btn" id="bMenu" type="button">МЕНЮ</button></div>
+    <div class="row between"><div><span class="px" style="font-size:10px">${topicOf(mode).short} · ГЛУБИНА ${depthOf(mode)}</span><h2 style="margin:6px 0 0">${MODES[mode].name.toUpperCase()}</h2></div><button class="btn" id="bMenu" type="button">МЕНЮ</button></div>
     <div class="xpl" style="margin-top:12px"><span>ОПЫТ</span><span id="xpTxt"></span></div><div class="xp" id="xp"></div><div class="cnt" id="cnt"></div>
     <div id="stage"></div></section>`;
   $('#bMenu').addEventListener('click', () => { playSfx('click'); go('home'); });
@@ -1438,7 +1458,9 @@ function startMode(mode){
 function nextTask(){
   const mode = App.mode, stage = $('#stage');
   if(!GENS[mode] || !MOUNTS[mode]){ stage.innerHTML = `<p class="lead">Эта шахта ещё строится.</p>`; updateXp(); return; }
-  const t = GENS[mode]();
+  let t = null;
+  for(let i = 0; i < 30 && !t; i++){ try{ t = GENS[mode](); }catch(e){ t = null; } }             // редкая неудачная генерация — просто пробуем снова
+  if(!t){ stage.innerHTML = `<p class="lead">Не получилось составить задачу. Нажми «МЕНЮ» и зайди снова.</p>`; updateXp(); return; }
   Run.begin(mode, t); stage.innerHTML = ''; MOUNTS[mode](t, stage); updateXp();
   const c = $('#card'); if(c){ c.classList.remove('ok', 'shake'); }
 }
@@ -1453,9 +1475,9 @@ function showResult(verdict){
   const mode = App.mode, r = S.modes[mode].round, stage = $('#stage');
   if(verdict === 'win'){
     playSfx('win');
-    const last = mode === 5;
+    const last = isLastOfTopic(mode);
     stage.innerHTML = `<div class="inset" style="margin-top:14px"><h2>ШАХТА ПРОЙДЕНА!</h2>
-      <p class="lead">Верных ответов: <b>${r.ok}</b> из ${r.n}. ${last ? 'Все пять шахт пройдены — ты настоящий шахтёр углов!' : `Открыта глубина ${mode + 1}: <b>${esc(MODES[mode + 1].name)}</b>.`}</p>
+      <p class="lead">Верных ответов: <b>${r.ok}</b> из ${r.n}. ${last ? `Все пять шахт темы «${esc(topicOf(mode).name)}» пройдены — ты настоящий шахтёр!` : `Открыта глубина ${depthOf(mode + 1)}: <b>${esc(MODES[mode + 1].name)}</b>.`}</p>
       <div class="opts">${last ? '' : '<button class="btn big block" id="bDeeper" type="button">ИДТИ ГЛУБЖЕ</button>'}<button class="btn big block" id="bAgain" type="button">ЕЩЁ ПОТРЕНИРОВАТЬСЯ</button><button class="btn big block" id="bHome" type="button">В МЕНЮ</button></div></div>`;
     if(!last) $('#bDeeper').addEventListener('click', () => { newRound(mode); go('mode', mode + 1); });
   }else{
@@ -1489,7 +1511,7 @@ function boot(){
 }
 
 /* ---------- 9. режим 1: «Найди угол» ---------- */
-const mt = text => esc(text).replace('∠', '<span class="ang">∠</span>');       // запись угла внутри кнопки
+const mt = text => esc(text).replace('∠', '<span class="ang">∠</span>').replace('△', '<span class="ang">△</span>');       // запись угла внутри кнопки
 GENS[1] = gen1;
 MOUNTS[1] = function(t, stage){
   const fig = t.fig, gate = {}, isFind = t.variant === 'find';
@@ -1600,7 +1622,7 @@ function sectorLabels(fig, o){
   return L;
 }
 const arcsAll = fig => fig.sec.filter(s => s.size < 180).map(s => ({A:angOfSector(fig, s.i), r:29, color:'#444'}));
-const numInput = (id, label) => `<div class="field">${label || ''}<input id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Число в градусах"><span class="u">°</span></div>`;
+const numInput = (id, label, unit) => `<div class="field">${label || ''}<input id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Ответ"><span class="u">${esc(unit || '°')}</span></div>`;
 
 /* ---------- 11. режим 3: «Перенеси условие на рисунок» ---------- */
 GENS[3] = gen3;
@@ -1769,8 +1791,11 @@ GENS[5] = gen5;
 MOUNTS[4] = (t, stage) => mountSteps(t, stage, {});
 MOUNTS[5] = (t, stage) => mount5(t, stage);
 
-const taskBox = t => `<div class="inset"><span class="px" style="font-size:10px">ЗАДАЧА</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>`;
+const taskBox = t => `<div class="inset"><span class="px" style="font-size:10px">ЗАДАЧА</span><div class="task" style="margin:6px 0 0">${t.text}</div>${t.banner ? `<div class="badge">${t.banner}</div>` : ''}</div>`;
+const ansName = t => t.tName || t.C.html(t.target);              // как назвать искомую величину
+const ansUnit = t => t.unit || '°';
 function problemBoard(t, known, o){
+  if(t.paint) return t.paint(known, o || {});                     // треугольники рисуют свой чертёж сами
   o = o || {};
   const fig = t.fig;
   return boardHTML(drawFigure(fig, {fills:o.fills || [], rayEm:o.rayEm, arcs:t.num ? arcsAll(fig) : [],
@@ -1798,7 +1823,7 @@ function mountSteps(t, stage, o){
   function complete(){
     locked = true; rayEm = []; paint([]);
     $('#stepLab').textContent = ''; $('#qText').innerHTML = ''; $('#qAns').innerHTML = '';
-    finishTask(`Ответ: ${t.C.html(t.target)} = ${t.answer}°.`);
+    finishTask(`Ответ: ${ansName(t)} = ${t.answer}${ansUnit(t)}.`);
   }
   function afterQuestion(q, how){
     addLog(how === 'shown' ? `Разбор: ${q.full}` : q.short, how === 'shown');
@@ -1823,7 +1848,7 @@ function mountSteps(t, stage, o){
         else{ locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(x.dataset.id === q.ans) x.classList.add('good'); }); rayEm = h.rays || []; afterQuestion(q, 'shown'); }
       }));
     }else{
-      $('#qAns').innerHTML = `<div class="field"><input id="num" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Ответ в градусах"><span class="u">°</span><button class="btn big" id="bOk" type="button">ОТВЕТИТЬ</button></div>`;
+      $('#qAns').innerHTML = `<div class="field"><input id="num" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" step="1" autocomplete="off" aria-label="Ответ"><span class="u">${esc(ansUnit(t))}</span><button class="btn big" id="bOk" type="button">ОТВЕТИТЬ</button></div>`;
       const inp = $('#num'), send = () => {
         if(locked) return;
         const v = parseInt(inp.value, 10);
@@ -1847,7 +1872,7 @@ function mount5(t, stage){
   const gate = {}, known = knownStart(t);
   let locked = false;
   stage.innerHTML = `${taskBox(t)}<div id="boardHost">${problemBoard(t, known)}</div>
-    ${numInput('ans', `<span class="px" style="font-size:10px;align-self:center">ОТВЕТ</span>`)}
+    ${numInput('ans', `<span class="px" style="font-size:10px;align-self:center">ОТВЕТ</span>`, ansUnit(t))}
     <div class="row" style="margin:0 3px"><button class="btn big grow" id="bOk" type="button">ПРОВЕРИТЬ</button></div>
     <div id="fb"></div><div id="more"></div><div id="nextbar"></div>`;
   const inp = $('#ans');
@@ -1858,7 +1883,7 @@ function mount5(t, stage){
     if(isNaN(v)){ setFb('<p>Впиши число — например, 65.</p>', 'hint'); return; }
     const w = t.wrongs.find(x => x.v === v);
     const r = judge(gate, v === t.answer, {trap:'numWrong', hint:`${w ? `<p>${w.msg}</p>` : ''}<p>${t.hint5}</p>`, reveal:'<p>Давай разберём эту задачу по шагам.</p>'});
-    if(r === 'right'){ locked = true; inp.disabled = true; $('#bOk').disabled = true; $('#more').innerHTML = ''; finishTask(`${t.C.html(t.target)} = ${t.answer}°. ${t.steps[t.steps.length - 1].qs.slice(-1)[0].short}`); }
+    if(r === 'right'){ locked = true; inp.disabled = true; $('#bOk').disabled = true; $('#more').innerHTML = ''; finishTask(`${ansName(t)} = ${t.answer}${ansUnit(t)}. ${t.steps[t.steps.length - 1].qs.slice(-1)[0].short}`); }
     else if(r === 'hint'){
       inp.select();
       $('#more').innerHTML = `<div class="row" style="margin:12px 3px 0"><button class="btn grow" id="bSteps" type="button">РАЗБИТЬ НА ШАГИ</button></div>`;
@@ -1879,16 +1904,18 @@ function renderTeacher(){
   const sum = m => S.modes[m].self + S.modes[m].hint + S.modes[m].shown;
   let h = `<section class="win"><div class="row between"><h1 style="margin:0">ДЛЯ УЧИТЕЛЯ</h1><button class="btn" id="tBack" type="button">МЕНЮ</button></div>
     <p class="lead" style="margin-top:12px">Статистика ученика на этом устройстве. «Сам» — верно с первой попытки; «с подсказкой» — верно после подсказки; «показано» — пришлось показать решение.</p>
-    ${storageOK() ? '' : '<div class="fb hint"><span class="tag">ВНИМАНИЕ</span><p>Браузер не даёт сохранять данные (приватный режим или запрет). Тренажёр работает, но прогресс исчезнет при закрытии страницы.</p></div>'}</section>
-    <section class="win"><h2>ПО РЕЖИМАМ</h2>`;
-  for(let m = 1; m <= 5; m++){
-    const st = S.modes[m], n = sum(m), help = st.hint + st.shown;
-    h += `<div class="srow"><div class="nm">Глубина ${m}. ${esc(MODES[m].name)} ${st.passed ? '<span class="px" style="font-size:9px">· ПРОЙДЕНО</span>' : isOpen(m) ? '' : '<span class="px" style="font-size:9px">· ЗАКРЫТО</span>'}</div>
-      <div class="c"><b>${n}</b>задач</div><div class="c"><b>${st.self}</b>сам</div><div class="c"><b>${st.hint}</b>с подсказкой</div><div class="c"><b>${st.shown}</b>показано</div>
-      <div class="bar" title="Доля задач, где понадобилась помощь"><i style="width:${n ? Math.round(help * 100 / n) : 0}%"></i></div>
-      <div class="c" style="grid-column:1/-1">${n ? `Помощь понадобилась в ${Math.round(help * 100 / n)}% задач.` : 'Пока нет решённых задач.'} ${st.round.n ? `Текущий раунд: ${st.round.ok} верных из ${st.round.n}.` : ''}</div></div>`;
-  }
-  h += `</section>`;
+    ${storageOK() ? '' : '<div class="fb hint"><span class="tag">ВНИМАНИЕ</span><p>Браузер не даёт сохранять данные (приватный режим или запрет). Тренажёр работает, но прогресс исчезнет при закрытии страницы.</p></div>'}</section>`;
+  TOPICS.forEach(tp => {
+    h += `<section class="win"><h2>ПО РЕЖИМАМ: ${esc(tp.short)}</h2>`;
+    for(let m = tp.first; m <= tp.last; m++){
+      const st = S.modes[m], n = sum(m), help = st.hint + st.shown;
+      h += `<div class="srow"><div class="nm">Глубина ${depthOf(m)}. ${esc(MODES[m].name)} ${st.passed ? '<span class="px" style="font-size:9px">· ПРОЙДЕНО</span>' : isOpen(m) ? '' : '<span class="px" style="font-size:9px">· ЗАКРЫТО</span>'}</div>
+        <div class="c"><b>${n}</b>задач</div><div class="c"><b>${st.self}</b>сам</div><div class="c"><b>${st.hint}</b>с подсказкой</div><div class="c"><b>${st.shown}</b>показано</div>
+        <div class="bar" title="Доля задач, где понадобилась помощь"><i style="width:${n ? Math.round(help * 100 / n) : 0}%"></i></div>
+        <div class="c" style="grid-column:1/-1">${n ? `Помощь понадобилась в ${Math.round(help * 100 / n)}% задач.` : 'Пока нет решённых задач.'} ${st.round.n ? `Текущий раунд: ${st.round.ok} верных из ${st.round.n}.` : ''}</div></div>`;
+    }
+    h += `</section>`;
+  });
   const types = Object.keys(S.types).map(k => ({k, x:S.types[k], rate:(S.types[k].hint + 2 * S.types[k].shown) / S.types[k].n}))
     .filter(r => r.x.hint + r.x.shown > 0).sort((a, b) => b.rate - a.rate || b.x.n - a.x.n).slice(0, 8);
   h += `<section class="win"><h2>ТИПЫ ЗАДАЧ, ГДЕ БОЛЬШЕ ВСЕГО ОШИБОК</h2>`;
@@ -1900,7 +1927,8 @@ function renderTeacher(){
   h += `<section class="win"><h2>ЧАСТЫЕ ОШИБКИ</h2>${traps.length ? `<ol class="err" style="padding-left:22px;margin:0">${traps.map(a => `<li>${esc(TRAP_TITLES[a[0]] || a[0])} <b>×${a[1]}</b></li>`).join('')}</ol>` : '<p class="muted">Пока не накопилось.</p>'}</section>
     <section class="win"><h2>ИНСТРУМЕНТЫ</h2><div class="opts">
       <button class="btn block" id="tOpen" type="button">${S.allOpen ? 'ВЕРНУТЬ ЗАМКИ НА ШАХТАХ' : 'ОТКРЫТЬ ВСЕ ШАХТЫ'}</button>
-      <button class="btn block" id="tCheck" type="button">САМОПРОВЕРКА МАТЕМАТИКИ (200 ЗАДАЧ)</button>
+      <button class="btn block" id="tCheck" type="button">САМОПРОВЕРКА: УГЛЫ (200 ЗАДАЧ)</button>
+      <button class="btn block" id="tCheckTri" type="button">САМОПРОВЕРКА: ТРЕУГОЛЬНИКИ (200 ЗАДАЧ)</button>
       <button class="btn block" id="tReset" type="button">СБРОСИТЬ ПРОГРЕСС</button></div>
       <pre class="rep" id="rep" hidden></pre></section>`;
   $('#main').innerHTML = h;
@@ -1911,11 +1939,1444 @@ function renderTeacher(){
     if(!armed){ armed = true; e.currentTarget.textContent = 'ТОЧНО СБРОСИТЬ? НАЖМИ ЕЩЁ РАЗ'; timer = setTimeout(() => { armed = false; e.currentTarget.textContent = 'СБРОСИТЬ ПРОГРЕСС'; }, 4000); return; }
     clearTimeout(timer); resetState(); renderHotbar(-1); renderTeacher();
   });
-  $('#tCheck').addEventListener('click', () => {
+  const runCheck = fn => {
     const rep = $('#rep'); rep.hidden = false;
-    rep.textContent = typeof selfCheck === 'function' ? formatCheck(selfCheck(200)) : 'Самопроверка недоступна.';
+    rep.textContent = typeof fn === 'function' ? formatCheck(fn(200)) : 'Самопроверка недоступна.';
     rep.scrollIntoView({block:'nearest', behavior:'smooth'});
+  };
+  $('#tCheck').addEventListener('click', () => runCheck(selfCheck));
+  $('#tCheckTri').addEventListener('click', () => runCheck(selfCheckTri));
+}
+
+/* =====================================================================
+   14. ТРЕУГОЛЬНИКИ: геометрия и чертёж
+   Точки хранятся по «ролям» A, B, C (вершины) и D (дополнительная точка на стороне
+   или на продолжении стороны); на чертеже каждой роли соответствует своя буква.
+   Координаты — в системе чертежа 360×360 (y вниз). Всё, что утверждает задача
+   (равенство, 90°, середина), проверяется по этим координатам.
+   ===================================================================== */
+const rad = d => d * Math.PI / 180;
+const toDeg = r => r * 180 / Math.PI;
+const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+const skey = (u, v) => [u, v].sort().join('');                              // 'AB', 'AC', 'BC'
+const dirDeg = (V, P) => mod360(toDeg(Math.atan2(V[1] - P[1], P[0] - V[0])));   // направление луча VP, градусы против часовой, y вверх
+function angleAt(V, P, Q){
+  const a = [P[0] - V[0], P[1] - V[1]], b = [Q[0] - V[0], Q[1] - V[1]];
+  return toDeg(Math.acos(clamp((a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1])), -1, 1)));
+}
+function distToSeg(p, a, b){
+  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+  const t = l2 ? clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2, 0, 1) : 0;
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+const sidesFromAngles = (a, b, c) => ({AB:100 * Math.sin(rad(c)), AC:100 * Math.sin(rad(b)), BC:100 * Math.sin(rad(a))});   // теорема синусов
+
+/* поставить треугольник: S — длины сторон {AB, AC, BC}; o: {base:'AC', tilt, mirror};
+   extraFn(P) может вернуть дополнительные точки (в тех же локальных координатах) */
+function placeTri(S, o, extraFn){
+  const base = o.base || pick(['AB', 'BC', 'AC']);
+  const X = base[0], Y = base[1], Z = ['A', 'B', 'C'].find(r => r !== X && r !== Y);
+  const dXY = S[skey(X, Y)], dXZ = S[skey(X, Z)], dYZ = S[skey(Y, Z)];
+  const zx = (dXZ * dXZ + dXY * dXY - dYZ * dYZ) / (2 * dXY), zy = -Math.sqrt(Math.max(0, dXZ * dXZ - zx * zx));
+  const pts = {}; pts[X] = [0, 0]; pts[Y] = [dXY, 0]; pts[Z] = [zx, zy];
+  if(extraFn) Object.assign(pts, extraFn(pts));
+  const keys = Object.keys(pts);
+  if(o.mirror) keys.forEach(k => { pts[k] = [dXY - pts[k][0], pts[k][1]]; });
+  const t = rad(o.tilt || 0), cs = Math.cos(t), sn = Math.sin(t);
+  keys.forEach(k => { const q = pts[k]; pts[k] = [q[0] * cs - q[1] * sn, q[0] * sn + q[1] * cs]; });
+  const xs = keys.map(k => pts[k][0]), ys = keys.map(k => pts[k][1]);
+  const w = Math.max.apply(null, xs) - Math.min.apply(null, xs), h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+  const k = Math.min(250 / w, 205 / h), cx = (Math.max.apply(null, xs) + Math.min.apply(null, xs)) / 2, cy = (Math.max.apply(null, ys) + Math.min.apply(null, ys)) / 2;
+  keys.forEach(r => { pts[r] = [180 + (pts[r][0] - cx) * k, 184 + (pts[r][1] - cy) * k]; });
+  return pts;
+}
+/* точка D на стороне UW по условию spec: 'median' | 'bisector' | 'height' | {t} | {angD:θ} | {angV:φ}; V — противоположная вершина */
+function cevianPoint(P, V, U, W, spec){
+  const Vp = P[V], Up = P[U], Wp = P[W];
+  if(spec === 'median') return lerp(Up, Wp, .5);
+  if(spec === 'bisector') return lerp(Up, Wp, dist(Vp, Up) / (dist(Vp, Up) + dist(Vp, Wp)));
+  if(spec === 'height'){ const dx = Wp[0] - Up[0], dy = Wp[1] - Up[1]; return lerp(Up, Wp, ((Vp[0] - Up[0]) * dx + (Vp[1] - Up[1]) * dy) / (dx * dx + dy * dy)); }
+  if(spec.t !== undefined) return lerp(Up, Wp, spec.t);
+  // численно: угол ∠UDV = θ (убывает от U к W) или ∠UVD = φ (растёт от U к W)
+  let lo = 0.001, hi = 0.999;
+  const f = t => spec.angD !== undefined ? angleAt(lerp(Up, Wp, t), Up, Vp) - spec.angD : spec.angV - angleAt(Vp, Up, lerp(Up, Wp, t));
+  const incr = f(hi) > f(lo);
+  for(let i = 0; i < 60; i++){ const m = (lo + hi) / 2; if((f(m) > 0) === incr) hi = m; else lo = m; }
+  return lerp(Up, Wp, (lo + hi) / 2);
+}
+/* Собрать чертёж. o:
+   angles {A,B,C} или sides {AB,AC,BC}; base, tilt, mirror;
+   cevian {from:'A', spec}  — точка D на противоположной стороне, проведён отрезок from–D;
+   ext {at:'C', from:'B'}   — D на продолжении стороны from–at за вершину at (внешний угол) */
+function makeTriFig(o){
+  const S = o.sides || sidesFromAngles(o.angles.A, o.angles.B, o.angles.C);
+  const extra = P => {
+    if(o.cevian){ const V = o.cevian.from, rest = ['A', 'B', 'C'].filter(r => r !== V); return {D:cevianPoint(P, V, rest[0], rest[1], o.cevian.spec)}; }
+    if(o.ext){ const a = P[o.ext.from], b = P[o.ext.at], len = 0.45 * dist(a, b); const u = [(b[0] - a[0]) / dist(a, b), (b[1] - a[1]) / dist(a, b)]; return {D:[b[0] + u[0] * len, b[1] + u[1] * len]}; }
+    return {};
+  };
+  const P0 = placeTri(S, o, extra);
+  const roles = ['A', 'B', 'C'].concat(P0.D ? ['D'] : []);
+  const lets = shuffle(LETTERS).slice(0, roles.length), L = {};
+  roles.forEach((r, i) => { L[r] = lets[i]; });
+  const segs = [['A', 'B'], ['B', 'C'], ['A', 'C']];
+  if(o.cevian) segs.push([o.cevian.from, 'D']);
+  if(o.ext) segs.push([o.ext.at, 'D']);
+  const P = {}; roles.forEach(r => { P[r] = P0[r]; });
+  const fig = {kind:'tri', P, L, roles, segs, cev:o.cevian ? o.cevian.from : null, ext:o.ext || null};
+  fig.ang = {A:angleAt(P.A, P.B, P.C), B:angleAt(P.B, P.A, P.C), C:angleAt(P.C, P.A, P.B)};
+  fig.len = {AB:dist(P.A, P.B), AC:dist(P.A, P.C), BC:dist(P.B, P.C)};
+  return fig;
+}
+const triCentroid = fig => [(fig.P.A[0] + fig.P.B[0] + fig.P.C[0]) / 3, (fig.P.A[1] + fig.P.B[1] + fig.P.C[1]) / 3];
+
+/* ---------- какие отрезки, лучи и углы есть на чертеже ---------- */
+function covered(fig, u, v){                  // отрезок uv целиком лежит на нарисованных отрезках?
+  for(let i = 0; i <= 24; i++){
+    const q = lerp(fig.P[u], fig.P[v], i / 24);
+    if(!fig.segs.some(s => distToSeg(q, fig.P[s[0]], fig.P[s[1]]) < 0.7)) return false;
+  }
+  return true;
+}
+function segList(fig){                        // все пары точек, соединённые нарисованным путём
+  const out = [];
+  for(let i = 0; i < fig.roles.length; i++) for(let j = i + 1; j < fig.roles.length; j++){
+    const u = fig.roles[i], v = fig.roles[j];
+    if(covered(fig, u, v)) out.push({a:u, b:v, id:skey(u, v), len:dist(fig.P[u], fig.P[v])});
+  }
+  return out;
+}
+function rayClasses(fig, v){                  // лучи из вершины v: точки на одном луче объединены
+  const pts = fig.roles.filter(r => r !== v && covered(fig, v, r)).map(r => ({r, dir:dirDeg(fig.P[v], fig.P[r]), d:dist(fig.P[v], fig.P[r])}));
+  const cls = [];
+  pts.forEach(p => {
+    const c = cls.find(x => Math.abs(mod360(x.dir - p.dir + 180) - 180) < 0.2);
+    if(c){ c.roles.push(p.r); if(p.d > c.d){ c.d = p.d; c.far = p.r; } } else cls.push({dir:p.dir, roles:[p.r], d:p.d, far:p.r});
   });
+  cls.forEach(c => c.roles.sort());
+  return cls;
+}
+/* все углы чертежа (меньше развёрнутого): {v, c1, c2, size, id} */
+function angList(fig){
+  const out = [];
+  fig.roles.forEach(v => {
+    const cl = rayClasses(fig, v);
+    for(let i = 0; i < cl.length; i++) for(let j = i + 1; j < cl.length; j++){
+      const size = angleAt(fig.P[v], fig.P[cl[i].far], fig.P[cl[j].far]);
+      if(size > 0.5 && size < 179.5) out.push({v, c1:cl[i], c2:cl[j], size, id:v + ':' + [cl[i].roles[0], cl[j].roles[0]].sort().join('')});
+    }
+  });
+  return out;
+}
+function wedgeParams(a){                      // от какого направления и на сколько градусов идёт угол (против часовой)
+  const d1 = a.c1.dir, d2 = a.c2.dir;
+  return mod360(d2 - d1) <= 180 ? {start:d1, size:a.size} : {start:d2, size:a.size};
+}
+const angR = (fig, a) => clamp(0.42 * Math.min(a.c1.d, a.c2.d), 26, 72);                       // радиус сектора для нажатия
+const angHas = (a, dirv) => { const w = wedgeParams(a); return mod360(dirv - w.start) <= w.size + 0.3; };
+function angNested(list, a){ return list.filter(b => b !== a && b.v === a.v && angHas(a, b.c1.dir) && angHas(a, b.c2.dir) && b.size < a.size - 0.5).length; }
+/* все записи угла: ∠ + буква на одном луче + вершина + буква на другом (и в обратном порядке) */
+function angNotations(fig, a){
+  const out = [];
+  a.c1.roles.forEach(p => a.c2.roles.forEach(q => { out.push('∠' + fig.L[p] + fig.L[a.v] + fig.L[q]); out.push('∠' + fig.L[q] + fig.L[a.v] + fig.L[p]); }));
+  return out;
+}
+const angById = (fig, id) => angList(fig).find(a => a.id === id);
+/* расшифровать запись из трёх букв: {v, p, q, kind:'angle'|'degenerate'}; буквы → роли */
+function roleOfLetter(fig, ch){ return fig.roles.find(r => fig.L[r] === ch); }
+function denoteAngle(fig, text){
+  const m = /^∠(.)(.)(.)$/.exec(text); if(!m) return null;
+  const p = roleOfLetter(fig, m[1]), v = roleOfLetter(fig, m[2]), q = roleOfLetter(fig, m[3]);
+  if(!p || !v || !q || p === v || q === v || p === q) return null;
+  if(!covered(fig, v, p) || !covered(fig, v, q)) return null;
+  const size = angleAt(fig.P[v], fig.P[p], fig.P[q]);
+  if(size < 0.5 || size > 179.5) return {kind:'degenerate', v, p, q};
+  const cl = rayClasses(fig, v), cp = cl.find(c => c.roles.includes(p)), cq = cl.find(c => c.roles.includes(q));
+  return {kind:'angle', v, p, q, id:v + ':' + [cp.roles[0], cq.roles[0]].sort().join('')};
+}
+function triList(fig){                        // все треугольники чертежа (тройки точек не на одной прямой)
+  const out = [], r = fig.roles;
+  for(let i = 0; i < r.length; i++) for(let j = i + 1; j < r.length; j++) for(let k = j + 1; k < r.length; k++){
+    const a = r[i], b = r[j], c = r[k];
+    if(covered(fig, a, b) && covered(fig, b, c) && covered(fig, a, c) && angleAt(fig.P[a], fig.P[b], fig.P[c]) > 0.5 && angleAt(fig.P[a], fig.P[b], fig.P[c]) < 179.5)
+      out.push({pts:[a, b, c], id:[a, b, c].sort().join('')});
+  }
+  return out;
+}
+const collinearTriples = fig => {
+  const out = [], r = fig.roles;
+  for(let i = 0; i < r.length; i++) for(let j = i + 1; j < r.length; j++) for(let k = j + 1; k < r.length; k++){
+    const s = angleAt(fig.P[r[i]], fig.P[r[j]], fig.P[r[k]]);          // три точки на одной прямой: угол при любой из них 0° или 180°
+    if(s < 0.5 || s > 179.5) out.push([r[i], r[j], r[k]]);
+  }
+  return out;
+};
+
+/* ---------- нажатия на чертёж ---------- */
+const triTapAngles = (fig, x, y) => {              // углы, в чей сектор попало нажатие, от меньшего к большему
+  const list = angList(fig), q = [x, y];
+  // сначала угол, чья вершина ближе к месту нажатия (иначе область далёкого угла перехватывает нажатие), у вложенных углов с общей вершиной — меньший
+  return list.filter(a => { const V = fig.P[a.v]; return dist(q, V) <= angR(fig, a) && angHas(a, dirDeg(V, q)); })
+    .sort((p, r) => (dist(q, fig.P[p.v]) - dist(q, fig.P[r.v])) || (p.size - r.size));
+};
+const triTapSegs = (fig, x, y, tol) => segList(fig).filter(s => distToSeg([x, y], fig.P[s.a], fig.P[s.b]) <= (tol || 14)).sort((p, r) => p.len - r.len);
+const triTapVertex = (fig, x, y) => {              // для режима 8: ближайшая вершина, внутри угла которой нажали
+  const q = [x, y];
+  const c = ['A', 'B', 'C'].filter(v => { const V = fig.P[v], o = ['A', 'B', 'C'].filter(r => r !== v); return dist(q, V) <= 118 && angleAt(V, fig.P[o[0]], q) + angleAt(V, q, fig.P[o[1]]) < angleAt(V, fig.P[o[0]], fig.P[o[1]]) + 0.6; });
+  return c.sort((a, b) => dist(q, fig.P[a]) - dist(q, fig.P[b]))[0] || null;
+};
+
+/* ---------- рисование ---------- */
+const wedgeAt = (cx, cy, a0, size, r) => { const t0 = rad(a0), t1 = rad(a0 + size); return `M${f1(cx)} ${f1(cy)}L${f1(cx + r * Math.cos(t0))} ${f1(cy - r * Math.sin(t0))}A${r} ${r} 0 ${size > 180 ? 1 : 0} 0 ${f1(cx + r * Math.cos(t1))} ${f1(cy - r * Math.sin(t1))}Z`; };
+const arcAt = (cx, cy, a0, size, r) => { const t0 = rad(a0), t1 = rad(a0 + size); return `M${f1(cx + r * Math.cos(t0))} ${f1(cy - r * Math.sin(t0))}A${r} ${r} 0 ${size > 180 ? 1 : 0} 0 ${f1(cx + r * Math.cos(t1))} ${f1(cy - r * Math.sin(t1))}`; };
+const outward = (fig, role, k) => { const c = triCentroid(fig), p = fig.P[role], d = dist(p, c) || 1; return [p[0] + (p[0] - c[0]) / d * k, p[1] + (p[1] - c[1]) / d * k]; };
+/* угол по вершине и двум лучам: найти в angList (поддерживает записи с разными буквами на одном луче) */
+function angOf(fig, v, p, q){ const d = denoteAngle(fig, '∠' + fig.L[p] + fig.L[v] + fig.L[q]); return d && d.kind === 'angle' ? angById(fig, d.id) : null; }
+function angLabelPos(fig, a){
+  const V = fig.P[a.v], w = wedgeParams(a), r = Math.min(clamp(28 / (2 * sinHalf(a.size)) + 24, 48, 98), 0.66 * Math.min(a.c1.d, a.c2.d));
+  const t = rad(w.start + w.size / 2);
+  return [V[0] + r * Math.cos(t), V[1] - r * Math.sin(t)];
+}
+/* o.fills: [{kind:'tri', pts, pat} | {kind:'ang', ang, pat}]; o.sideEm: [[u,v]]; o.ptEm: [роли]; o.ticks: [{a,b,n}];
+   o.marks: [{ang, n, r}] дуги равных углов; o.cues: показать дуги у всех углов; o.right: [{v,p,q}];
+   o.angLabels: [{ang, text, fill}]; o.sideLabels: [{a,b,text}]; o.extra: готовый SVG */
+function drawTri(fig, o){
+  o = o || {};
+  const Pt = fig.P, pp = r => f1(Pt[r][0]) + ',' + f1(Pt[r][1]);
+  let s = `<svg viewBox="0 0 360 360" role="img" aria-label="${esc(o.aria || 'Чертёж: треугольник')}" style="overflow:visible"${o.attrs ? ' ' + o.attrs : ''}>`;
+  (o.fills || []).forEach(F => {
+    if(F.kind === 'tri') s += `<polygon points="${F.pts.map(pp).join(' ')}" fill="url(#px-${F.pat})" shape-rendering="crispEdges"/>`;
+    else{
+      const w = wedgeParams(F.ang), V = Pt[F.ang.v], R = F.r || angR(fig, F.ang);
+      s += `<path d="${wedgeAt(V[0], V[1], w.start, w.size, R)}" fill="url(#px-${F.pat})" shape-rendering="crispEdges"/><path d="${arcAt(V[0], V[1], w.start, w.size, R)}" fill="none" stroke="#222" stroke-width="2" shape-rendering="crispEdges"/>`;
+    }
+  });
+  (o.sideHl || []).forEach(e => { s += `<line x1="${f1(Pt[e[0]][0])}" y1="${f1(Pt[e[0]][1])}" x2="${f1(Pt[e[1]][0])}" y2="${f1(Pt[e[1]][1])}" stroke="#f2b705" stroke-width="12" stroke-linecap="square"/>`; });
+  (o.sideEm || []).forEach(e => { s += `<line class="rayem pulse" x1="${f1(Pt[e[0]][0])}" y1="${f1(Pt[e[0]][1])}" x2="${f1(Pt[e[1]][0])}" y2="${f1(Pt[e[1]][1])}"/>`; });
+  s += `<polygon data-tri="1" points="${['A', 'B', 'C'].map(pp).join(' ')}" fill="none" stroke="#161616" stroke-width="3.5" stroke-linejoin="miter"/>`;
+  fig.segs.filter(sg => !(['A', 'B', 'C'].includes(sg[0]) && ['A', 'B', 'C'].includes(sg[1]))).forEach(sg => {
+    s += `<line data-seg="${sg.join('')}" x1="${f1(Pt[sg[0]][0])}" y1="${f1(Pt[sg[0]][1])}" x2="${f1(Pt[sg[1]][0])}" y2="${f1(Pt[sg[1]][1])}" stroke="#161616" stroke-width="3.5" stroke-linecap="square"/>`;
+  });
+  if(o.cues){
+    const list = angList(fig);
+    list.forEach(a => { const w = wedgeParams(a), V = Pt[a.v]; s += `<path d="${arcAt(V[0], V[1], w.start, w.size, 18 + 8 * angNested(list, a))}" fill="none" stroke="#555" stroke-width="2" shape-rendering="crispEdges"/>`; });
+  }
+  (o.marks || []).forEach(m => {
+    const w = wedgeParams(m.ang), V = Pt[m.ang.v];
+    for(let i = 0; i < (m.n || 1); i++) s += `<path d="${arcAt(V[0], V[1], w.start, w.size, (m.r || 34) + 6 * i)}" fill="none" stroke="#161616" stroke-width="3" shape-rendering="crispEdges"/>`;
+  });
+  (o.right || []).forEach(q => {
+    const V = Pt[q.v], u1 = [(Pt[q.p][0] - V[0]) / dist(V, Pt[q.p]), (Pt[q.p][1] - V[1]) / dist(V, Pt[q.p])], u2 = [(Pt[q.q][0] - V[0]) / dist(V, Pt[q.q]), (Pt[q.q][1] - V[1]) / dist(V, Pt[q.q])], k = 17;
+    s += `<polyline points="${f1(V[0] + u1[0] * k)},${f1(V[1] + u1[1] * k)} ${f1(V[0] + (u1[0] + u2[0]) * k)},${f1(V[1] + (u1[1] + u2[1]) * k)} ${f1(V[0] + u2[0] * k)},${f1(V[1] + u2[1] * k)}" fill="none" stroke="#161616" stroke-width="3" data-right="${q.v}"/>`;
+  });
+  (o.ticks || []).forEach(t => {
+    const a = Pt[t.a], b = Pt[t.b], m = lerp(a, b, .5), d = dist(a, b), u = [(b[0] - a[0]) / d, (b[1] - a[1]) / d], n = [-u[1], u[0]];
+    for(let i = 0; i < (t.n || 1); i++){
+      const off = (i - ((t.n || 1) - 1) / 2) * 6;
+      s += `<line x1="${f1(m[0] + u[0] * off - n[0] * 8)}" y1="${f1(m[1] + u[1] * off - n[1] * 8)}" x2="${f1(m[0] + u[0] * off + n[0] * 8)}" y2="${f1(m[1] + u[1] * off + n[1] * 8)}" stroke="#161616" stroke-width="3"/>`;
+    }
+  });
+  (o.ptEm || []).forEach(r => { s += `<circle class="pulse" cx="${f1(Pt[r][0])}" cy="${f1(Pt[r][1])}" r="15" fill="none" stroke="#3b82f6" stroke-width="4"/>`; });
+  fig.roles.forEach(r => { s += `<rect x="${f1(Pt[r][0] - 4.5)}" y="${f1(Pt[r][1] - 4.5)}" width="9" height="9" fill="#161616"/>`; });
+  fig.roles.forEach(r => { const q = outward(fig, r, 22); s += `<text class="lt" x="${f1(q[0])}" y="${f1(q[1])}" text-anchor="middle" dy=".35em">${fig.L[r]}</text>`; });
+  (o.angLabels || []).forEach(L => {
+    const q = angLabelPos(fig, L.ang), w = String(L.text).length > 3 ? 54 : 46;
+    s += `<rect x="${f1(q[0] - w / 2)}" y="${f1(q[1] - 13)}" width="${w}" height="26" fill="${L.fill || '#fffbe8'}" stroke="#111" stroke-width="2" shape-rendering="crispEdges"/><text class="${L.cls || 'val'}" x="${f1(q[0])}" y="${f1(q[1])}" dy=".35em">${esc(L.text)}</text>`;
+  });
+  (o.sideLabels || []).forEach(L => {
+    const m = lerp(Pt[L.a], Pt[L.b], .5), c = triCentroid(fig), d = Math.hypot(m[0] - c[0], m[1] - c[1]) || 1, q = [m[0] + (m[0] - c[0]) / d * 20, m[1] + (m[1] - c[1]) / d * 20], w = String(L.text).length > 3 ? 56 : 40;
+    s += `<rect x="${f1(q[0] - w / 2)}" y="${f1(q[1] - 12)}" width="${w}" height="24" fill="${L.fill || '#fffbe8'}" stroke="#111" stroke-width="2" shape-rendering="crispEdges"/><text class="${L.cls || 'val'}" x="${f1(q[0])}" y="${f1(q[1])}" dy=".35em">${esc(L.text)}</text>`;
+  });
+  return s + (o.extra || '') + '</svg>';
+}
+/* измеренные с нарисованного: углы треугольника по координатам вершин из SVG (для самопроверки) */
+function svgTriAngles(svg){
+  const m = /<polygon data-tri="1" points="([^"]+)"/.exec(svg); if(!m) return null;
+  const p = m[1].split(' ').map(s => s.split(',').map(Number));
+  return [angleAt(p[0], p[1], p[2]), angleAt(p[1], p[0], p[2]), angleAt(p[2], p[0], p[1])];
+}
+
+/* =====================================================================
+   15. ТРЕУГОЛЬНИКИ: генераторы задач (режимы 6–10)
+   ===================================================================== */
+Object.assign(TYPE_TITLES, {
+  'm6.find.angle':'Найти угол по трём буквам на треугольнике',
+  'm6.find.side':'Найти отрезок по двум буквам',
+  'm6.name.angle':'Выбрать запись выделенного угла (треугольник)',
+  'm6.name.side':'Выбрать запись выделенного отрезка',
+  'm6.name.tri':'Выбрать запись выделенного треугольника',
+  'm7.median':'Узнать медиану (по рискам на сторонах)',
+  'm7.bisector':'Узнать биссектрису (по дугам у вершины)',
+  'm7.height':'Узнать высоту (по прямому углу)',
+  'm7.none':'Ловушка: отрезок похож на медиану, биссектрису или высоту, но не он',
+  'm7.sides':'Вид треугольника по сторонам',
+  'm7.angles':'Вид треугольника по углам',
+  'm7.scale':'Ловушка: «рисунку не верь» (стороны)',
+  'm8.tvals':'Перенос чисел на чертёж треугольника',
+  'm8.tpair.med':'Условие «медиана»: что отметить на чертеже',
+  'm8.tpair.bis':'Условие «биссектриса»: что отметить на чертеже',
+  'm8.tpair.hei':'Условие «высота»: что отметить на чертеже',
+  'm8.tpair.iso':'Условие «две стороны равны»: что отметить на чертеже'
+});
+const TRI_STEP_TITLES = {tsum:'Сумма углов треугольника (один угол больше другого)', tiso:'Равнобедренный треугольник', text:'Внешний угол треугольника',
+  tcev:'Биссектриса и высота в треугольнике', tper:'Периметр и неравенство треугольника'};
+Object.keys(TRI_STEP_TITLES).forEach(k => { TYPE_TITLES['m9.' + k] = 'По шагам: ' + TRI_STEP_TITLES[k]; TYPE_TITLES['m10.' + k] = 'Как в учебнике: ' + TRI_STEP_TITLES[k]; });
+Object.assign(TRAP_TITLES, {
+  wrongVertex:'Показал угол при другой вершине',
+  segNeighbor:'Перепутал отрезок с соседним (общий конец)',
+  segPart:'Перепутал отрезок с его частью или со всей стороной',
+  triOther:'Назвал не тот треугольник',
+  triDegenerate:'Назвал треугольником три точки на одной прямой',
+  cevMix:'Перепутал медиану, биссектрису и высоту',
+  cevNone:'Назвал медианой/биссектрисой/высотой отрезок без нужных отметок',
+  cevMiss:'Не заметил отметки (риски, дуги, прямой угол) на отрезке',
+  triSides:'Не различил равнобедренный, равносторонний и разносторонний',
+  triAngles:'Не различил остроугольный, прямоугольный и тупоугольный',
+  triScale:'Поверил рисунку, а не числам на нём',
+  isoMissEq:'Не заметил, что углы при основании равнобедренного равны',
+  isoApex:'Записал вершинный угол в углы при основании',
+  consequence:'Не выбрал верное следствие из условия (медиана, биссектриса, высота)',
+  tRule_sum180:'Не вспомнил, что углы треугольника в сумме дают 180°',
+  tRule_isoBase:'Не вспомнил, что углы при основании равнобедренного равны',
+  tRule_ext:'Не вспомнил про внешний угол треугольника',
+  tRule_adj180:'Не вспомнил, что смежные углы дают 180°',
+  tRule_bis:'Не вспомнил, что биссектриса делит угол пополам',
+  tRule_height:'Не вспомнил, что высота образует прямой угол',
+  tRule_perim:'Не вспомнил, что периметр — сумма всех сторон',
+  tRule_ineq:'Не вспомнил неравенство треугольника'
+});
+
+/* ---------- общие помощники ---------- */
+const tL = (fig, r) => fig.L[r];
+const tOther = v => ['A', 'B', 'C'].filter(r => r !== v);
+const tTilt = () => rnd() < 0.7 ? ri(-16, 16) : ri(0, 359);
+function tFig(angles, o){ return makeTriFig(Object.assign({angles, base:pick(['AB', 'BC', 'AC']), tilt:tTilt(), mirror:rnd() < 0.5}, o || {})); }
+function randAngles(lo, hi, minDiff){
+  for(let g = 0; g < 5000; g++){                       // число попыток ограничено: бесконечный цикл завесил бы страницу
+    const a = ri(lo, hi), b = ri(lo, hi), c = 180 - a - b;
+    if(c < lo || c > hi || Math.abs(a - b) < minDiff || Math.abs(b - c) < minDiff || Math.abs(a - c) < minDiff) continue;
+    return {A:a, B:b, C:c};
+  }
+  throw new Error('randAngles: нет решения');
+}
+const tVAng = (fig, v) => { const o = tOther(v); return angOf(fig, v, o[0], o[1]); };                   // угол треугольника при вершине v
+const vNameH = (fig, v, long, rev) => long ? nm('∠' + (rev ? tL(fig, tOther(v)[1]) + tL(fig, v) + tL(fig, tOther(v)[0]) : tL(fig, tOther(v)[0]) + tL(fig, v) + tL(fig, tOther(v)[1]))) : nm('∠' + tL(fig, v));
+const triNameH = fig => nm('△' + ['A', 'B', 'C'].map(r => tL(fig, r)).join(''));
+const segNameH = (fig, a, b, rev) => nm(rev ? tL(fig, b) + tL(fig, a) : tL(fig, a) + tL(fig, b));
+const angNameH = (fig, a, rev) => nm(angNotations(fig, a)[rev ? 1 : 0]);
+const sideEmOf = (fig, a) => [[a.v, a.c1.far], [a.v, a.c2.far]];                                           // стороны угла — для подсветки в подсказках
+
+/* ===== режим 6: «Найди элемент» ===== */
+function gen6(){
+  for(let tries = 0; tries < 80; tries++){
+    const variant = rnd() < 0.55 ? 'find' : 'name', roll = rnd();
+    const withCev = variant === 'name' ? true : rnd() < 0.55;          // у простого треугольника всего 3 угла и 3 стороны — для 4 вариантов ответа нужен проведённый отрезок
+    const o = {angles:randAngles(36, 96, 6), base:pick(['AB', 'BC', 'AC']), tilt:tTilt(), mirror:rnd() < 0.5};
+    if(withCev) o.cevian = {from:pick(['A', 'B', 'C']), spec:{t:0.3 + rnd() * 0.4}};
+    const fig = makeTriFig(o), angs = angList(fig);
+    if(angs.some(a => a.size < 14)) continue;
+    let kind = roll < 0.5 ? 'angle' : roll < 0.85 ? 'side' : 'tri';
+    if(kind === 'tri' && !(withCev && variant === 'name')) kind = rnd() < 0.6 ? 'angle' : 'side';
+    const t = {mode:6, variant, kind, type:`m6.${variant}.${kind}`, fig, rev:rnd() < 0.5};
+    if(kind === 'angle'){
+      t.target = pick(angs); t.text = pick(angNotations(fig, t.target));
+      if(variant === 'name') t.opts = nameAngleOptions(fig, t.target);
+    }else if(kind === 'side'){
+      const segs = segList(fig); t.target = pick(segs); t.text = t.rev ? tL(fig, t.target.b) + tL(fig, t.target.a) : tL(fig, t.target.a) + tL(fig, t.target.b);
+      if(variant === 'name') t.opts = nameSegOptions(fig, t.target);
+    }else{
+      const tris = triList(fig); t.target = pick(tris); t.text = '△' + shuffle(t.target.pts).map(r => tL(fig, r)).join('');
+      t.opts = nameTriOptions(fig, t.target);
+    }
+    if(t.opts && t.opts.list.length !== 4) continue;
+    return t;
+  }
+}
+function nameAngleOptions(fig, A){
+  const list = angList(fig), opts = [{kind:'ok', text:pick(angNotations(fig, A))}], seen = new Set([A.id]);
+  const add = (kind, text) => { const d = denoteAngle(fig, text); if(!d || d.kind !== 'angle' || seen.has(d.id)) return false; seen.add(d.id); opts.push({kind, text}); return true; };
+  const p = pick(A.c1.roles), q = pick(A.c2.roles), L = r => fig.L[r];
+  for(const tx of shuffle(['∠' + L(A.v) + L(p) + L(q), '∠' + L(p) + L(q) + L(A.v), '∠' + L(A.v) + L(q) + L(p), '∠' + L(q) + L(p) + L(A.v)])) if(add('vertexMid', tx)) break;
+  const inside = (a, b) => angHas(a, b.c1.dir) && angHas(a, b.c2.dir) && b.size < a.size - 0.5;            // b лежит внутри a
+  const same = list.filter(b => b.v === A.v && b.id !== A.id), cand = [];
+  same.forEach(b => cand.push([inside(b, A) ? 'wider' : inside(A, b) ? 'part' : 'neighbor', b]));
+  shuffle(cand).sort((x, y) => (x[0] === 'neighbor' ? 0 : 1) - (y[0] === 'neighbor' ? 0 : 1)).forEach(c => { if(opts.length < 4) add(c[0], pick(angNotations(fig, c[1]))); });
+  shuffle(list).forEach(b => { if(opts.length < 4) add('other', pick(angNotations(fig, b))); });
+  const order = shuffle(opts);
+  return {list:order, correct:order.findIndex(o => o.kind === 'ok')};
+}
+function nameSegOptions(fig, S){
+  const segs = segList(fig), opts = [{kind:'ok', text:rnd() < 0.5 ? fig.L[S.a] + fig.L[S.b] : fig.L[S.b] + fig.L[S.a]}], seen = new Set([S.id]);
+  const kindOf = s => {
+    const sh = [s.a, s.b].filter(r => r === S.a || r === S.b);
+    if(sh.length !== 1) return 'other';
+    const o1 = s.a === sh[0] ? s.b : s.a, o2 = S.a === sh[0] ? S.b : S.a, ang = angleAt(fig.P[sh[0]], fig.P[o1], fig.P[o2]);
+    return ang < 0.5 || ang > 179.5 ? (s.len > S.len ? 'wider' : 'part') : 'neighbor';
+  };
+  const cand = segs.filter(s => !seen.has(s.id)).map(s => [kindOf(s), s]);
+  shuffle(cand).sort((x, y) => ({neighbor:0, wider:1, part:1, other:2}[x[0]] - {neighbor:0, wider:1, part:1, other:2}[y[0]])).forEach(c => {
+    if(opts.length < 4 && !seen.has(c[1].id)){ seen.add(c[1].id); opts.push({kind:c[0], text:rnd() < 0.5 ? fig.L[c[1].a] + fig.L[c[1].b] : fig.L[c[1].b] + fig.L[c[1].a]}); }
+  });
+  const order = shuffle(opts);
+  return {list:order, correct:order.findIndex(o => o.kind === 'ok')};
+}
+function nameTriOptions(fig, T){
+  const opts = [{kind:'ok', text:'△' + shuffle(T.pts).map(r => tL(fig, r)).join('')}];
+  triList(fig).filter(x => x.id !== T.id).forEach(x => { if(opts.length < 3) opts.push({kind:'triOther', text:'△' + shuffle(x.pts).map(r => tL(fig, r)).join('')}); });
+  const deg = collinearTriples(fig)[0];
+  if(deg) opts.push({kind:'triDegenerate', text:'△' + shuffle(deg).map(r => tL(fig, r)).join('')});
+  const order = shuffle(opts);
+  return {list:order, correct:order.findIndex(o => o.kind === 'ok')};
+}
+/* что обозначает вариант-запись: для самопроверки и подсказок */
+function denoteSeg(fig, text){ const a = roleOfLetter(fig, text[0]), b = roleOfLetter(fig, text[1]); return a && b && a !== b && text.length === 2 ? skey(a, b) : null; }
+function denoteTri(fig, text){
+  const m = /^△(.)(.)(.)$/.exec(text); if(!m) return null;
+  const r = [m[1], m[2], m[3]].map(c => roleOfLetter(fig, c)); if(r.some(x => !x) || new Set(r).size !== 3) return null;
+  const a = angleAt(fig.P[r[0]], fig.P[r[1]], fig.P[r[2]]);
+  return {pts:r, id:r.slice().sort().join(''), kind:a < 0.5 || a > 179.5 ? 'degenerate' : 'tri'};
+}
+
+/* ===== режим 7: «Что это такое?» ===== */
+const CEV_OPTS = [{id:'median', label:'МЕДИАНА'}, {id:'bisector', label:'БИССЕКТРИСА'}, {id:'height', label:'ВЫСОТА'}, {id:'none', label:'НИ ТО НИ ДРУГОЕ'}];
+const SIDE_OPTS = [{id:'iso', label:'РАВНОБЕДРЕННЫЙ'}, {id:'equi', label:'РАВНОСТОРОННИЙ'}, {id:'scal', label:'РАЗНОСТОРОННИЙ'}];
+const ANG_OPTS = [{id:'acute', label:'ОСТРОУГОЛЬНЫЙ'}, {id:'right', label:'ПРЯМОУГОЛЬНЫЙ'}, {id:'obtuse', label:'ТУПОУГОЛЬНЫЙ'}];
+function cevProps(fig){                      // что на самом деле верно для проведённого отрезка (по координатам)
+  const V = fig.cev, uw = tOther(V), P = fig.P, U = uw[0], W = uw[1];
+  return {med:Math.abs(dist(P[U], P.D) - dist(P.D, P[W])) / dist(P[U], P[W]) < 0.01,
+          bis:Math.abs(angleAt(P[V], P[U], P.D) - angleAt(P[V], P.D, P[W])) < 0.3,
+          hei:Math.abs(angleAt(P.D, P[V], P[U]) - 90) < 0.3};
+}
+function gen7(){
+  const r = rnd();
+  const kind = r < 0.13 ? 'median' : r < 0.26 ? 'bisector' : r < 0.39 ? 'height' : r < 0.55 ? 'none' : r < 0.71 ? 'sides' : r < 0.86 ? 'angles' : 'scale';
+  return kind === 'sides' ? gen7sides() : kind === 'angles' ? gen7angles() : kind === 'scale' ? gen7scale() : gen7cev(kind);
+}
+function gen7cev(kind){
+  for(let tries = 0; tries < 400; tries++){
+    const V = pick(['A', 'B', 'C']), uw = tOther(V), U = uw[0], W = uw[1];
+    const an = randAngles(40, 96, 7);
+    let spec = kind === 'median' ? 'median' : kind === 'bisector' ? 'bisector' : kind === 'height' ? 'height' : null, sub = null, p, q, phi1, theta;
+    if(kind === 'none'){
+      sub = pick(['mid', 'ang', 'perp']);
+      if(sub === 'mid'){ [p, q] = pick([[4, 5], [5, 6], [3, 4], [5, 7], [7, 8], [6, 7], [8, 9]]); if(rnd() < 0.5){ const z = p; p = q; q = z; } spec = {t:p / (p + q)}; }
+      else if(sub === 'ang'){ phi1 = Math.round(an[V] * (0.42 + rnd() * 0.05)); spec = {angV:phi1}; }
+      else { theta = pick([80, 82, 84, 96, 98, 100]); spec = {angD:theta}; }
+    }
+    const fig = makeTriFig({angles:an, base:pick(['AB', 'BC', 'AC']), tilt:tTilt(), mirror:rnd() < 0.5, cevian:{from:V, spec}});
+    const pr = cevProps(fig), P = fig.P;
+    if(angList(fig).some(a => a.size < 12) || dist(P.D, P[U]) < 22 || dist(P.D, P[W]) < 22) continue;
+    const exactly = kind === 'median' ? pr.med && !pr.bis && !pr.hei : kind === 'bisector' ? pr.bis && !pr.med && !pr.hei : kind === 'height' ? pr.hei && !pr.med && !pr.bis : !pr.med && !pr.bis && !pr.hei;
+    if(!exactly) continue;
+    if(kind === 'height' && (fig.ang[U] > 84 || fig.ang[W] > 84)) continue;
+    if(sub === 'ang' && (Math.abs(phi1 - (an[V] - phi1)) < 3 || Math.abs(angleAt(P[V], P[U], P.D) - phi1) > 0.1)) continue;
+    if(sub === 'perp' && Math.abs(angleAt(P.D, P[V], P[U]) - theta) > 0.1) continue;
+    if(sub === 'mid' && Math.abs(dist(P[U], P.D) / dist(P[U], P[W]) - p / (p + q)) > 0.001) continue;
+    const t = {mode:7, kind, sub, type:'m7.' + kind, fig, V, U, W, ans:kind, opts:CEV_OPTS, props:pr, banner:'', question:'cev'};
+    t.marks = {};
+    if(kind === 'median') t.marks.ticks = [{a:U, b:'D', n:1}, {a:'D', b:W, n:1}];
+    if(kind === 'bisector') t.marks.marks = [{ang:angOf(fig, V, U, 'D'), n:1, r:38}, {ang:angOf(fig, V, 'D', W), n:1, r:38}];
+    if(kind === 'height') t.marks.right = [{v:'D', p:V, q:U}];
+    if(sub === 'mid'){ t.marks.sideLabels = [{a:U, b:'D', text:String(p)}, {a:'D', b:W, text:String(q)}]; t.nums = {p, q}; }
+    if(sub === 'ang'){ t.marks.angLabels = [{ang:angOf(fig, V, U, 'D'), text:phi1 + '°'}, {ang:angOf(fig, V, 'D', W), text:(an[V] - phi1) + '°'}]; t.nums = {a1:phi1, a2:an[V] - phi1}; }
+    if(sub === 'perp'){ t.marks.angLabels = [{ang:angOf(fig, 'D', V, U), text:theta + '°'}]; t.nums = {theta}; }
+    cevTexts(t);
+    return t;
+  }
+}
+function cevTexts(t){
+  const fig = t.fig, L = r => fig.L[r], UD = nm(L(t.U) + L('D')), DW = nm(L('D') + L(t.W)), UW = nm(L(t.U) + L(t.W));
+  const a1 = nm('∠' + L(t.U) + L(t.V) + L('D')), a2 = nm('∠' + L('D') + L(t.V) + L(t.W)), aD = nm('∠' + L(t.V) + L('D') + L(t.U)), VDt = nm(L(t.V) + L('D'));
+  t.question = `Что такое отрезок ${VDt} в треугольнике ${triNameH(fig)}?`;
+  const N = t.nums || {};
+  const T = {
+    median:[`На отрезках ${UD} и ${DW} стоят одинаковые риски, значит они равны и D — середина ${UW}. Отрезок из вершины в середину противоположной стороны — медиана.`, `Одинаковые риски на ${UD} и ${DW}: D — середина, значит ${VDt} — медиана.`],
+    bisector:[`У вершины ${nm(L(t.V))} стоят одинаковые дуги: ${a1} = ${a2}. Отрезок, который делит угол пополам, — биссектриса.`, `Дуги у вершины ${nm(L(t.V))} одинаковые: ${VDt} делит угол пополам — это биссектриса.`],
+    height:[`Квадратик у точки D — это прямой угол: ${VDt} ⊥ ${UW}. Перпендикуляр из вершины к противоположной стороне — высота.`, `Квадратик у D — прямой угол: ${VDt} ⊥ ${UW}, значит ${VDt} — высота.`],
+    none:{mid:[`${UD} = ${N.p}, ${DW} = ${N.q}: D не середина ${UW}, значит ${VDt} не медиана. Равных углов и прямого угла нет, поэтому это не биссектриса и не высота.`, `${N.p} ≠ ${N.q}: D не середина, а других отметок нет — это просто отрезок.`],
+          ang:[`${a1} = ${N.a1}°, а ${a2} = ${N.a2}°: углы не равны, значит ${VDt} не биссектриса. Рисок на сторонах и прямого угла нет — не медиана и не высота.`, `${N.a1}° ≠ ${N.a2}°: не биссектриса, и других отметок нет.`],
+          perp:[`${aD} = ${N.theta}°, а не 90°: ${VDt} не перпендикулярен ${UW}, значит это не высота. Равных рисок и дуг нет — не медиана и не биссектриса.`, `${N.theta}° ≠ 90°: не высота, и других отметок нет.`]}[t.sub]
+  };
+  const x = kindText(t, T); t.why = x[0]; t.whyShort = x[1];
+}
+const kindText = (t, T) => t.kind === 'none' ? T.none : T[t.kind];
+/* подсказка на один шаг: {html, em:{sides, pts}, trap} */
+function hint7cev(t, chosen){
+  const fig = t.fig, L = r => fig.L[r], V = t.V, U = t.U, W = t.W;
+  const VDt = nm(L(V) + L('D')), UD = nm(L(U) + L('D')), DW = nm(L('D') + L(W)), v = nm(L(V));
+  const em = {median:{sides:[[U, 'D'], ['D', W]], pts:[]}, bisector:{sides:[[V, U], [V, 'D'], [V, W]], pts:[]}, height:{sides:[], pts:['D']}};
+  if(chosen === 'none'){
+    const what = t.kind === 'median' ? `риски на ${UD} и ${DW}` : t.kind === 'bisector' ? `дуги у вершины ${v}` : `квадратик у точки D`;
+    return {html:`Посмотри на отметки на чертеже: ${what}. Что они показывают? Подсказка: отметки нужны, чтобы узнать медиану, биссектрису или высоту.`, em:em[t.kind], trap:'cevMiss'};
+  }
+  const txt = {
+    median:`Медиана делит сторону пополам. Посмотри на ${UD} и ${DW}: есть ли у них одинаковые риски или одинаковые числа?`,
+    bisector:`Биссектриса делит угол пополам. Посмотри у вершины ${v}: есть ли одинаковые дуги или одинаковые числа у двух частей угла?`,
+    height:`Высота перпендикулярна стороне: с ней получается прямой угол. Есть ли у точки D квадратик или угол 90°?`
+  };
+  return {html:txt[chosen], em:em[chosen], trap:t.kind === 'none' ? 'cevNone' : 'cevMix'};
+}
+function gen7sides(){
+  const form = pick(['iso', 'equi', 'scal']), nums = rnd() < 0.4;
+  let fig, ticks = [], sl = [], an;
+  const R = ['A', 'B', 'C'];
+  if(!nums){
+    if(form === 'iso'){ const a = pick([30, 36, 40, 44, 50, 56, 64, 70, 80, 90, 100]), X = pick(R), o = tOther(X); an = {}; an[X] = a; an[o[0]] = an[o[1]] = (180 - a) / 2; fig = makeTriFig({angles:an, base:skey(o[0], o[1]), tilt:ri(-10, 10), mirror:rnd() < 0.5}); ticks = [{a:X, b:o[0], n:1}, {a:X, b:o[1], n:1}]; }
+    else if(form === 'equi'){ fig = makeTriFig({angles:{A:60, B:60, C:60}, base:pick(['AB', 'BC', 'AC']), tilt:ri(-10, 10)}); ticks = [{a:'A', b:'B', n:1}, {a:'B', b:'C', n:1}, {a:'A', b:'C', n:1}]; }
+    else { an = randAngles(34, 96, 9); fig = tFig(an); ticks = [{a:'A', b:'B', n:1}, {a:'B', b:'C', n:2}, {a:'A', b:'C', n:3}]; }
+  }else{
+    let s;
+    if(form === 'iso'){ const x = ri(4, 9); let y; do{ y = ri(3, 2 * x - 1); }while(y === x); s = [x, x, y]; }
+    else if(form === 'equi'){ const x = ri(4, 9); s = [x, x, x]; }
+    else { do{ s = [ri(4, 11), ri(4, 11), ri(4, 11)]; }while(new Set(s).size < 3 || Math.max.apply(null, s) >= s[0] + s[1] + s[2] - Math.max.apply(null, s)); }
+    s = shuffle(s);
+    const S = {AB:s[0] * 20, BC:s[1] * 20, AC:s[2] * 20};
+    fig = makeTriFig({sides:S, base:pick(['AB', 'BC', 'AC']), tilt:ri(-10, 10), mirror:rnd() < 0.5});
+    if(['A', 'B', 'C'].some(r => fig.ang[r] < 28 || fig.ang[r] > 125)) return gen7sides();        // слишком «вытянутый» треугольник плохо виден — берём другие числа
+    sl = [{a:'A', b:'B', text:String(s[0])}, {a:'B', b:'C', text:String(s[1])}, {a:'A', b:'C', text:String(s[2])}];
+  }
+  const t = {mode:7, kind:'sides', type:'m7.sides', fig, ans:form, opts:SIDE_OPTS, banner:'', marks:{ticks, sideLabels:sl}, nums:nums ? sl.map(x => +x.text) : null, tickN:ticks.map(x => x.n), form};
+  t.question = `Какой это треугольник ${triNameH(fig)}? Выбери самый точный ответ.`;
+  const nm3 = (x, y) => nm(tL(fig, x) + tL(fig, y));
+  if(!nums) t.why = form === 'iso' ? `Две стороны ${nm3(ticks[0].a, ticks[0].b)} и ${nm3(ticks[1].a, ticks[1].b)} отмечены одинаковыми рисками — они равны, а третья сторона не отмечена. Значит, треугольник равнобедренный.`
+    : form === 'equi' ? 'У всех трёх сторон одинаковые риски: все стороны равны — треугольник равносторонний (он, как и любой равносторонний, ещё и равнобедренный, но точнее — равносторонний).'
+    : 'У сторон разное число рисок: 1, 2 и 3. Разные риски означают разные длины, значит все стороны разные — треугольник разносторонний.';
+  else t.why = form === 'iso' ? `Среди сторон ${t.nums.join(', ')} ровно две равные — треугольник равнобедренный.` : form === 'equi' ? `Все стороны равны ${t.nums[0]}: треугольник равносторонний.` : `Стороны ${t.nums.join(', ')} все разные — треугольник разносторонний.`;
+  t.whyShort = !nums ? (form === 'iso' ? 'Две стороны с одинаковыми рисками — равнобедренный.' : form === 'equi' ? 'Три стороны с одинаковыми рисками — равносторонний.' : 'Риски разные — все стороны разные: разносторонний.')
+    : (form === 'iso' ? `Ровно две равные стороны — равнобедренный.` : form === 'equi' ? 'Все стороны равны — равносторонний.' : 'Все стороны разные — разносторонний.');
+  return t;
+}
+function gen7angles(){
+  const form = pick(['acute', 'right', 'obtuse']), near = rnd() < 0.3;
+  let an, found = false;
+  for(let g = 0; g < 4000 && !found; g++){
+    if(form === 'right'){ const b = ri(28, 62); an = [90, b, 90 - b]; }
+    else if(form === 'acute'){ if(near){ const b = ri(34, 50); an = [88, b, 92 - b]; } else { const a = ri(40, 80), b = ri(40, 80); an = [a, b, 180 - a - b]; } }
+    else { if(near){ const b = ri(30, 50); an = [92, b, 88 - b]; } else { const a = ri(100, 130), b = ri(28, 180 - a - 28); an = [a, b, 180 - a - b]; } }
+    found = an.every(x => x >= 28 && x <= 140) && an[0] + an[1] + an[2] === 180 && (form !== 'acute' || an.every(x => x < 90)) && (form !== 'obtuse' || an.some(x => x > 90));
+  }
+  if(!found) return;
+  an = shuffle(an);
+  const roles = ['A', 'B', 'C'], A = {A:an[0], B:an[1], C:an[2]};
+  const fig = tFig(A), labels = roles.map(r => ({ang:tVAng(fig, r), text:A[r] + '°'})), right = [];
+  if(form === 'right'){ const rv = roles.find(r => A[r] === 90), o = tOther(rv); right.push({v:rv, p:o[0], q:o[1]}); }
+  const t = {mode:7, kind:'angles', type:'m7.angles', fig, ans:form, opts:ANG_OPTS, banner:'', near, form, marks:{angLabels:labels, right}, nums:an};
+  t.question = `Какой это треугольник ${triNameH(fig)}?`;
+  t.why = form === 'right' ? `Один угол равен 90° (отмечен квадратиком) — треугольник прямоугольный.` : form === 'acute' ? `Все три угла (${an.join('°, ')}°) меньше 90° — треугольник остроугольный.${near ? ' Угол 88° — ещё не прямой.' : ''}` : `Один угол (${Math.max.apply(null, an)}°) больше 90° — треугольник тупоугольный.${near ? ' Угол 92° — уже тупой.' : ''}`;
+  t.whyShort = form === 'right' ? 'Есть угол 90° — прямоугольный.' : form === 'acute' ? 'Все углы меньше 90° — остроугольный.' : 'Есть угол больше 90° — тупоугольный.';
+  return t;
+}
+function gen7scale(){
+  const v = pick(['a', 'b', 'c', 'd']);
+  let an, s, ans;
+  if(v === 'a'){ an = {A:60, B:60, C:60}; s = shuffle([5, 6, 7]); ans = 'scal'; }
+  else if(v === 'b'){ const a = pick([36, 44, 50]); an = {A:a, B:(180 - a) / 2, C:(180 - a) / 2}; s = shuffle([4, 5, 6]); ans = 'scal'; }
+  else if(v === 'c'){ an = randAngles(44, 78, 8); s = [6, 6, 6]; ans = 'equi'; }
+  else { an = randAngles(44, 78, 8); s = shuffle([6, 6, 5]); ans = 'iso'; }
+  const fig = tFig(an);
+  const sl = [{a:'A', b:'B', text:String(s[0])}, {a:'B', b:'C', text:String(s[1])}, {a:'A', b:'C', text:String(s[2])}];
+  const t = {mode:7, kind:'scale', type:'m7.scale', fig, ans, opts:SIDE_OPTS, scale:true, banner:'РИСУНОК НЕ В МАСШТАБЕ — ВЕРЬ ЧИСЛАМ', marks:{sideLabels:sl}, nums:s.slice(), form:ans};
+  t.question = `Какой это треугольник ${triNameH(fig)}? Выбери самый точный ответ.`;
+  t.why = ans === 'scal' ? `Стороны ${s.join(', ')} все разные — треугольник разносторонний, хотя на рисунке он выглядит иначе: чертёж не в масштабе, верить надо числам.`
+    : ans === 'equi' ? `Все стороны равны 6 — треугольник равносторонний, хотя на рисунке стороны разные: чертёж не в масштабе, верить надо числам.`
+    : `Стороны ${s.join(', ')}: ровно две равные — треугольник равнобедренный, хотя на рисунке он выглядит иначе: верить надо числам.`;
+  t.whyShort = ans === 'scal' ? 'Числа на сторонах все разные — разносторонний (рисунку не верим).' : ans === 'equi' ? 'Числа на сторонах одинаковые — равносторонний (рисунку не верим).' : 'Две стороны с одинаковыми числами — равнобедренный (рисунку не верим).';
+  return t;
+}
+function hint7(t, chosen){
+  if(t.question === 'cev' || t.kind === 'median' || t.kind === 'bisector' || t.kind === 'height' || t.kind === 'none') return hint7cev(t, chosen);
+  if(t.kind === 'angles'){
+    const html = chosen === 'right' ? 'Прямоугольный треугольник — тот, у которого есть угол ровно 90°. Посмотри на числа: есть ли среди них 90°?'
+      : chosen === 'acute' ? 'Остроугольный: все три угла меньше 90°. Проверь каждое число: нет ли угла, который больше 90°?'
+      : 'Тупоугольный: есть угол больше 90°. Найди самый большой угол и сравни его с 90°.';
+    return {html, em:{sides:[], pts:[]}, trap:'triAngles'};
+  }
+  const html = chosen === 'iso' ? 'Равнобедренный: равны ровно две стороны. Сколько сторон отмечено одинаково или имеет одинаковые числа?'
+    : chosen === 'equi' ? 'Равносторонний: равны все три стороны. Посмотри на метки или числа: одинаковы ли все три?'
+    : 'Разносторонний: все три стороны разные. Есть ли среди меток или чисел одинаковые?';
+  return {html, em:{sides:[], pts:[]}, trap:t.kind === 'scale' ? 'triScale' : 'triSides'};
+}
+/* факты для самопроверки режима 7 (независимо от генератора): вид по сторонам / углам */
+const sideKind = s => { const e = (a, b) => Math.abs(a - b) < 1e-6; const ab = e(s[0], s[1]), bc = e(s[1], s[2]), ac = e(s[0], s[2]); return ab && bc ? 'equi' : (ab || bc || ac) ? 'iso' : 'scal'; };
+const angKind = a => Math.max.apply(null, a) > 90 + 1e-6 ? 'obtuse' : a.some(x => Math.abs(x - 90) < 1e-6) ? 'right' : 'acute';
+
+/* ===== режим 8: «Перенеси условие на рисунок» ===== */
+function gen8(){ return rnd() < 0.5 ? gen8vals() : gen8pair(); }
+function gen8vals(){
+  const form = pick(['plain', 'isoBase', 'isoApex']), long = rnd() < 0.5;
+  let an, given, expected, cond, X = null, o;
+  if(form === 'plain'){
+    an = randAngles(34, 96, 8); const rr = shuffle(['A', 'B', 'C']); given = rr.slice(0, 2); expected = {}; given.forEach(r => { expected[r] = an[r]; }); X = null;
+  }else{
+    X = pick(['A', 'B', 'C']); o = tOther(X);
+    if(form === 'isoBase'){ const a = ri(40, 75); an = {}; an[X] = 180 - 2 * a; an[o[0]] = an[o[1]] = a; given = [o[0]]; expected = {}; expected[o[0]] = a; expected[o[1]] = a; }
+    else { const m = pick([30, 36, 40, 44, 50, 56, 64, 70, 80, 90, 100]); an = {}; an[X] = m; an[o[0]] = an[o[1]] = (180 - m) / 2; given = [X]; expected = {}; expected[X] = m; }
+  }
+  const fig = makeTriFig({angles:an, base:X ? skey(o[0], o[1]) : pick(['AB', 'BC', 'AC']), tilt:tTilt(), mirror:rnd() < 0.5});
+  const rev = {}; ['A', 'B', 'C'].forEach(r => { rev[r] = rnd() < 0.5; });
+  const nameOf = r => vNameH(fig, r, long, rev[r]);
+  const parts = given.map(r => `${nameOf(r)} = ${an[r]}°`);
+  cond = (X ? `${segNameH(fig, X, o[0])} = ${segNameH(fig, X, o[1])}, ` : '') + parts.join(', ');
+  return {mode:8, kind:'tvals', type:'m8.tvals', fig, form, X, given, expected, an, text:cond, chips:Array.from(new Set(given.map(r => an[r]))), nameH:{A:nameOf('A'), B:nameOf('B'), C:nameOf('C')}, long};
+}
+function checkTvals(t, placed){
+  const issues = [];
+  ['A', 'B', 'C'].forEach(r => {
+    const p = placed[r], e = t.expected[r];
+    if(e !== undefined){ if(p === undefined) issues.push({kind:t.given.includes(r) ? 'missGiven' : 'skipEq', r}); else if(p !== e) issues.push({kind:'wrong', r, got:p}); }
+    else if(p !== undefined) issues.push({kind:t.form === 'isoApex' ? 'isoApex' : 'extra', r, got:p});
+  });
+  const order = {wrong:0, isoApex:1, extra:1, missGiven:2, skipEq:3};
+  return issues.sort((a, b) => order[a.kind] - order[b.kind]);
+}
+function gen8pair(){
+  const kind = pick(['med', 'bis', 'hei', 'iso']);
+  for(let tries = 0; tries < 300; tries++){
+    if(kind === 'iso'){
+      const X = pick(['A', 'B', 'C']), o = tOther(X), m = pick([30, 36, 40, 44, 50, 56, 64, 70, 80, 90, 100]), an = {}; an[X] = m; an[o[0]] = an[o[1]] = (180 - m) / 2;
+      const fig = makeTriFig({angles:an, base:skey(o[0], o[1]), tilt:tTilt(), mirror:rnd() < 0.5}), L = r => tL(fig, r);
+      const q = [[X, o[0]], [X, o[1]]];
+      const opts = shuffle([{id:'ok', text:`∠${L(o[0])} = ∠${L(o[1])}`, truth:true}, {id:'x1', text:`∠${L(X)} = ∠${L(o[0])}`, truth:false}, {id:'x2', text:`${L(o[0])}${L(o[1])} = ${L(X)}${L(o[0])}`, truth:false}]);
+      const t = {mode:8, kind:'tpair', sub:'iso', type:'m8.tpair.iso', fig, X, picks:{type:'side', items:q.map(s => skey(s[0], s[1]))}, text:`${nm(L(X) + L(o[0]))} = ${nm(L(X) + L(o[1]))}`, opts, ask:'Что следует из этого условия?'};
+      t.okWhy = `Равные стороны ${nm(L(X) + L(o[0]))} и ${nm(L(X) + L(o[1]))} — боковые, ${nm(L(o[0]) + L(o[1]))} — основание. Углы при основании равнобедренного треугольника равны: ∠${L(o[0])} = ∠${L(o[1])}.`;
+      return t;
+    }
+    const V = pick(['A', 'B', 'C']), uw = tOther(V), U = uw[0], W = uw[1];
+    const spec = kind === 'med' ? 'median' : kind === 'bis' ? 'bisector' : 'height';
+    const fig = makeTriFig({angles:randAngles(40, 96, 7), base:pick(['AB', 'BC', 'AC']), tilt:tTilt(), mirror:rnd() < 0.5, cevian:{from:V, spec}});
+    const pr = cevProps(fig);
+    if(!(kind === 'med' ? pr.med && !pr.bis && !pr.hei : kind === 'bis' ? pr.bis && !pr.med && !pr.hei : pr.hei && !pr.med && !pr.bis)) continue;
+    if(kind === 'hei' && (fig.ang[U] > 84 || fig.ang[W] > 84)) continue;
+    if(angList(fig).some(a => a.size < 12) || dist(fig.P.D, fig.P[U]) < 22 || dist(fig.P.D, fig.P[W]) < 22) continue;
+    const L = r => tL(fig, r), VD = nm(L(V) + L('D')), tri = triNameH(fig);
+    const facts = {med:{id:'ok', text:`${L(U)}${L('D')} = ${L('D')}${L(W)}`}, bis:{id:'ok', text:`∠${L(U)}${L(V)}${L('D')} = ∠${L('D')}${L(V)}${L(W)}`}, hei:{id:'ok', text:`${L(V)}${L('D')} ⊥ ${L(U)}${L(W)}`}};
+    const wrong = [facts.med, facts.bis, facts.hei].filter(x => x !== facts[kind]).map((x, i) => ({id:'x' + i, text:x.text, truth:false}));
+    const opts = shuffle([{id:'ok', text:facts[kind].text, truth:true}].concat(wrong));
+    const t = {mode:8, kind:'tpair', sub:kind, type:'m8.tpair.' + kind, fig, V, U, W, opts, ask:'Что следует из этого условия?', spec};
+    t.text = kind === 'med' ? `${VD} — медиана треугольника ${tri}` : kind === 'bis' ? `${VD} — биссектриса треугольника ${tri}` : `${VD} — высота треугольника ${tri}`;
+    if(kind === 'med') t.picks = {type:'side', items:[skey(U, 'D'), skey('D', W)]};
+    if(kind === 'bis') t.picks = {type:'ang', items:[angOf(fig, V, U, 'D').id, angOf(fig, V, 'D', W).id]};
+    if(kind === 'hei') t.picks = {type:'ang', items:[angOf(fig, 'D', V, U).id, angOf(fig, 'D', V, W).id], any:true};
+    t.okWhy = kind === 'med' ? `Медиана ${VD} соединяет вершину с серединой стороны ${nm(L(U) + L(W))}, поэтому ${nm(L(U) + L('D'))} = ${nm(L('D') + L(W))}.`
+      : kind === 'bis' ? `Биссектриса ${VD} делит угол ${nm('∠' + L(U) + L(V) + L(W))} пополам: ${nm('∠' + L(U) + L(V) + L('D'))} = ${nm('∠' + L('D') + L(V) + L(W))}.`
+      : `Высота ${VD} перпендикулярна стороне ${nm(L(U) + L(W))}: ${nm(L(V) + L('D'))} ⊥ ${nm(L(U) + L(W))}, углы при точке D прямые (90°).`;
+    return t;
+  }
+}
+/* верно ли высказывание-вариант на самом чертеже: проверка по координатам (для самопроверки) */
+function tpairTruth(t, opt){
+  const fig = t.fig, P = fig.P, m = /^(.)(.) = (.)(.)$/.exec(opt.text), a = /^∠(.)(.)(.) = ∠(.)(.)(.)$/.exec(opt.text), a2 = /^∠(.) = ∠(.)$/.exec(opt.text), pp = /^(.)(.) ⊥ (.)(.)$/.exec(opt.text);
+  const R = c => roleOfLetter(fig, c);
+  if(pp) return Math.abs(angleAt(P[R(pp[2])], P[R(pp[1])], P[R(pp[4])]) - 90) < 0.3;
+  if(a) return Math.abs(angleAt(P[R(a[2])], P[R(a[1])], P[R(a[3])]) - angleAt(P[R(a[5])], P[R(a[4])], P[R(a[6])])) < 0.3;
+  if(a2){ const v = R(a2[1]), w = R(a2[2]), vo = tOther(v), wo = tOther(w); return Math.abs(angleAt(P[v], P[vo[0]], P[vo[1]]) - angleAt(P[w], P[wo[0]], P[wo[1]])) < 0.3; }
+  if(m) return Math.abs(dist(P[R(m[1])], P[R(m[2])]) - dist(P[R(m[3])], P[R(m[4])])) / dist(P[R(m[1])], P[R(m[2])]) < 0.01;
+  return null;
+}
+
+/* ===== режимы 9 и 10: задачи по шагам ===== */
+const TRULE = {
+  sum180:'СУММА УГЛОВ ТРЕУГОЛЬНИКА = 180°', isoBase:'УГЛЫ ПРИ ОСНОВАНИИ РАВНЫ', ext:'ВНЕШНИЙ УГОЛ = СУММА ДВУХ НЕСМЕЖНЫХ',
+  adj180:'СМЕЖНЫЕ УГЛЫ В СУММЕ 180°', bis:'БИССЕКТРИСА ДЕЛИТ УГОЛ ПОПОЛАМ', height:'ВЫСОТА ДАЁТ ПРЯМОЙ УГОЛ (90°)',
+  perim:'ПЕРИМЕТР = СУММА ВСЕХ СТОРОН', ineq:'СУММА ДВУХ СТОРОН БОЛЬШЕ ТРЕТЬЕЙ', isoSide:'БОКОВЫЕ СТОРОНЫ РАВНОБЕДРЕННОГО РАВНЫ'
+};
+const TRULE_HINT = {
+  sum180:'Сумма трёх углов любого треугольника — 180°. Какой «лишний» угол ты ищешь?',
+  isoBase:'В равнобедренном треугольнике углы при основании равны. Основание — сторона, на которой нет равных сторон.',
+  ext:'Внешний угол треугольника равен сумме двух внутренних углов, не смежных с ним.',
+  adj180:'Смежные углы вместе дают 180° (они лежат на одной прямой).',
+  bis:'Биссектриса делит угол пополам: каждая половина равна половине всего угла.',
+  height:'Высота перпендикулярна стороне, к которой проведена: получается прямой угол, 90°.',
+  perim:'Периметр — это сумма длин всех сторон треугольника.',
+  ineq:'В треугольнике сумма двух любых сторон должна быть больше третьей стороны.',
+  isoSide:'Боковые стороны равнобедренного треугольника равны между собой.'
+};
+function tRuleQ(truth, pool){
+  const ids = [truth].concat(shuffle(pool.filter(x => x !== truth)).slice(0, 2));
+  const opts = shuffle(ids).map(id => ({id, label:TRULE[id]}));
+  return {id:'rule', kind:'choice', ask:'Какое правило применим?', opts, ans:truth,
+    hint:c => ({html:TRULE_HINT[truth], rays:{sides:[], pts:[]}, trap:'tRule_' + truth}),
+    short:TRULE_HINT[truth], full:TRULE_HINT[truth]};
+}
+const RULE_POOL = ['sum180', 'isoBase', 'ext', 'adj180', 'bis', 'height', 'perim', 'ineq', 'isoSide'];
+function tChoiceQ(ask, opts, ans, hints, short, trap){
+  return {id:'layout', kind:'choice', ask, opts:shuffle(opts), ans, hint:c => ({html:hints[c], rays:{sides:[], pts:[]}, trap:trap || 'layout'}), short, full:short};
+}
+function tNumQ(ask, ans, o){ return {id:'num', kind:'num', ask, ans, label:o.label || '', hint:o.hint, wrongs:o.wrongs || [], short:o.short, full:o.full || o.short, place:o.place || []}; }
+function mkTri(kind, fig, keys, cond, ask, answer, steps, hint5, target, o){
+  o = o || {};
+  const wrongs = [], add = w => { if(w.v !== answer && !wrongs.some(x => x.v === w.v)) wrongs.push(w); };
+  steps.forEach(s => s.qs.forEach(q => { if(q.kind === 'num') q.wrongs.forEach(add); }));
+  steps.forEach(s => s.qs.forEach(q => { if(q.kind === 'num' && q.ans !== answer) add({v:q.ans, msg:`${q.ans}${o.unit || '°'} — это ${q.label || 'промежуточный результат'}, а не ответ. Продолжи решение до нужной величины.`}); }));
+  const t = {mode:9, kind, type:'m9.' + kind, fig, naming:'tri', keys, cond, ask, text:`${cond}. ${ask}`, answer, steps, hint5, wrongs, target, unit:o.unit || '°', tName:o.tName, known0:o.known0 || [], meta:o.meta || {}, scale:!!o.scale, banner:o.banner || ''};
+  t.C = {html:k => t.tName, plain:k => ''};
+  t.paint = triPaint(t);
+  return t;
+}
+/* чертёж задачи: подписи известных величин и «?» для искомой */
+function triPaint(t){
+  return function(known, po){
+    po = po || {};
+    const fig = t.fig, angLabels = [], sideLabels = [];
+    Object.keys(t.keys).forEach(k => {
+      const d = t.keys[k], has = known[k] !== undefined;
+      if(!has && k !== t.target) return;
+      const text = has ? known[k] + (d.ang ? '°' : '') : '?', fill = has ? '#fffbe8' : '#fff0b8';
+      if(d.ang) angLabels.push({ang:d.ang, text, fill, cls:has ? 'val' : 'val q'});
+      else sideLabels.push({a:d.seg[0], b:d.seg[1], text, fill, cls:has ? 'val' : 'val q'});
+    });
+    const fills = [], sideEm = [], ptEm = [];
+    (po.fills || []).forEach(f => {
+      if(f.kind === 'tri') fills.push({kind:'tri', pts:f.pts, pat:f.pat});
+      else if(f.kind === 'ang'){ const a = angOf(fig, f.v, f.p, f.q); if(a) fills.push({kind:'ang', ang:a, pat:f.pat}); }
+      else if(f.kind === 'side') sideEm.push([f.a, f.b]);
+    });
+    const em = po.rayEm && !Array.isArray(po.rayEm) ? po.rayEm : {};
+    (em.sides || []).forEach(s => sideEm.push(s)); (em.pts || []).forEach(r => ptEm.push(r));
+    return boardHTML(drawTri(fig, {fills, sideEm, ptEm, angLabels, sideLabels, ticks:t.ticks, marks:t.marksSpec, right:t.right}));
+  };
+}
+const TKA = (fig, v) => ({ang:tVAng(fig, v)});                       // ключ-угол при вершине v
+
+function gen9(){ return pick([genTsum, genTiso, genText, genTcev, genTper])(); }
+function gen10(){ const t = gen9(); t.mode = 10; t.type = 'm10.' + t.kind; return t; }
+
+function genTsum(){
+  for(let g = 0; g < 5000; g++){
+    const c = ri(34, 90), d = pick([10, 12, 14, 16, 20, 24, 30]), x2 = 180 - c - d;
+    if(x2 % 2 || x2 / 2 < 30 || x2 / 2 + d > 110) continue;
+    const x = x2 / 2, y = x + d, rr = shuffle(['A', 'B', 'C']), big = rr[0], small = rr[1], third = rr[2];
+    const an = {}; an[big] = y; an[small] = x; an[third] = c;
+    const fig = tFig(an), H = r => vNameH(fig, r, false), askBig = rnd() < 0.5;
+    const keys = {}; ['A', 'B', 'C'].forEach(r => { keys[r] = TKA(fig, r); });
+    const allTri = [{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}];
+    const steps = [
+      {angles:allTri, qs:[tRuleQ('sum180', RULE_POOL),
+        tNumQ(`Чему равна сумма ${H(big)} + ${H(small)}?`, 180 - c, {label:`сумма ${H(big)} + ${H(small)}`, hint:`Все три угла вместе дают 180°, а ${H(third)} уже известен (${c}°). Вычти.`,
+          wrongs:[{v:180, msg:'180° — это сумма всех трёх углов. А нужна сумма только двух из них: вычти ещё известный угол.'}, {v:c, msg:`${c}° — это ${H(third)}, он известен. Нужна сумма двух других углов.`}],
+          short:`${H(big)} + ${H(small)} + ${H(third)} = 180°, значит ${H(big)} + ${H(small)} = 180° − ${c}° = ${180 - c}°.`})]},
+      {angles:[{kind:'ang', v:big, p:tOther(big)[0], q:tOther(big)[1], pat:'a'}, {kind:'ang', v:small, p:tOther(small)[0], q:tOther(small)[1], pat:'b'}], qs:[
+        tNumQ(`Если у большего угла убрать лишние ${d}°, углы станут равными, а вместе будут ${180 - c - d}°. Чему равен меньший угол ${H(small)}?`, x,
+          {label:`меньший угол ${H(small)}`, hint:`Из ${180 - c}° убери лишние ${d}° — останется два равных угла. Раздели результат на 2.`,
+           wrongs:[{v:y, msg:`${y}° — это больший угол ${H(big)}. Мы ищем меньший.`}, {v:180 - c - d, msg:`${180 - c - d}° — это два равных меньших угла вместе. Нужен один: раздели пополам.`}],
+           short:`(${180 - c}° − ${d}°) : 2 = ${x}°, это ${H(small)}.`, place:[{sec:small, v:x}]})]}];
+    if(askBig) steps.push({angles:[{kind:'ang', v:big, p:tOther(big)[0], q:tOther(big)[1], pat:'a'}], qs:[
+      tNumQ(`Чему равен ${H(big)}?`, y, {label:H(big), hint:`${H(big)} на ${d}° больше, чем ${H(small)} = ${x}°.`, wrongs:[{v:x, msg:`${x}° — это ${H(small)}. А ${H(big)} больше него на ${d}°.`}], short:`${H(big)} = ${x}° + ${d}° = ${y}°.`, place:[{sec:big, v:y}]})]});
+    const tgt = askBig ? big : small;
+    return mkTri('tsum', fig, keys, `В треугольнике ${triNameH(fig)} ${H(big)} на ${d}° больше ${H(small)}, а ${H(third)} = ${c}°`, `Найдите ${H(tgt)}.`, askBig ? y : x, steps,
+      `Сумма углов треугольника — 180°. Сначала найди сумму двух неизвестных углов, потом убери «лишние» ${d}° и раздели пополам.`, tgt, {tName:H(tgt), known0:[{sec:third, v:c}], meta:{big, small, third, d, c, x, y}});
+  }
+}
+function genTiso(){
+  const apexGiven = rnd() < 0.5, X = pick(['A', 'B', 'C']), o = tOther(X);
+  const base = apexGiven ? pick([30, 36, 40, 44, 50, 56, 64, 70, 80, 90, 100, 110]) : ri(40, 75);          // apexGiven: вершинный угол; иначе — угол при основании
+  const apex = apexGiven ? base : 180 - 2 * base, bAng = apexGiven ? (180 - base) / 2 : base;
+  const an = {}; an[X] = apex; an[o[0]] = an[o[1]] = bAng;
+  const fig = makeTriFig({angles:an, base:skey(o[0], o[1]), tilt:tTilt(), mirror:rnd() < 0.5}), H = r => vNameH(fig, r, false), L = r => tL(fig, r);
+  const keys = {}; ['A', 'B', 'C'].forEach(r => { keys[r] = TKA(fig, r); });
+  const side = (a, b) => nm(L(a) + L(b));
+  const ticks = [{a:X, b:o[0], n:1}, {a:X, b:o[1], n:1}];
+  const isoQ = tChoiceQ(`Что известно о треугольнике ${triNameH(fig)}, если ${side(X, o[0])} = ${side(X, o[1])}?`,
+    [{id:'ok', label:`РАВНОБЕДРЕННЫЙ, ОСНОВАНИЕ ${L(o[0])}${L(o[1])}`}, {id:'b', label:`РАВНОБЕДРЕННЫЙ, ОСНОВАНИЕ ${L(X)}${L(o[0])}`}, {id:'c', label:'РАВНОСТОРОННИЙ'}], 'ok',
+    {b:`Основание — сторона, на которой НЕТ равных сторон. Равны ${side(X, o[0])} и ${side(X, o[1])}: они боковые. Какая сторона остаётся?`, c:`У равностороннего равны все три стороны, а здесь равны только две. Какая сторона — основание?`},
+    `Равны стороны ${side(X, o[0])} и ${side(X, o[1])} — это боковые стороны, основание — ${side(o[0], o[1])}.`, 'isoMissEq');
+  const wholeTri = [{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}];
+  const baseAng = [{kind:'ang', v:o[0], p:X, q:o[1], pat:'a'}, {kind:'ang', v:o[1], p:X, q:o[0], pat:'b'}];
+  let steps, ask, ans, hint5, known0, tgt;
+  if(!apexGiven){
+    steps = [
+      {angles:baseAng, qs:[isoQ, tRuleQ('isoBase', RULE_POOL),
+        tNumQ(`Чему равен ${H(o[1])}?`, bAng, {label:H(o[1]), hint:`Углы при основании равны: ${H(o[1])} = ${H(o[0])} = ${bAng}°.`, wrongs:[{v:apex, msg:`${apex}° — это угол при вершине ${L(X)}. А ${H(o[1])} лежит на основании и равен ${H(o[0])}.`}],
+          short:`${H(o[1])} = ${H(o[0])} = ${bAng}° (углы при основании равны).`, place:[{sec:o[1], v:bAng}]})]},
+      {angles:wholeTri, qs:[tRuleQ('sum180', RULE_POOL),
+        tNumQ(`Чему равен ${H(X)}?`, apex, {label:H(X), hint:`Из 180° вычти два угла при основании: ${bAng}° и ${bAng}°.`, wrongs:[{v:180 - bAng, msg:`Ты вычел только один угол при основании. Нужно вычесть оба: ${bAng}° и ${bAng}°.`}],
+          short:`${H(X)} = 180° − ${bAng}° − ${bAng}° = ${apex}°.`, place:[{sec:X, v:apex}]})]}];
+    ask = `Найдите ${H(X)}.`; ans = apex; tgt = X; known0 = [{sec:o[0], v:bAng}];
+    hint5 = `Углы при основании равнобедренного треугольника равны. Потом используй сумму углов: 180°.`;
+  }else{
+    steps = [
+      {angles:wholeTri, qs:[isoQ, tRuleQ('sum180', RULE_POOL),
+        tNumQ(`Чему равна сумма ${H(o[0])} + ${H(o[1])}?`, 180 - apex, {label:`сумма ${H(o[0])} + ${H(o[1])}`, hint:`Три угла дают 180°, а ${H(X)} = ${apex}°. Вычти.`, wrongs:[{v:apex, msg:`${apex}° — это ${H(X)}. Нужна сумма двух других углов.`}],
+          short:`${H(o[0])} + ${H(o[1])} = 180° − ${apex}° = ${180 - apex}°.`})]},
+      {angles:baseAng, qs:[tRuleQ('isoBase', RULE_POOL),
+        tNumQ(`Чему равен ${H(o[0])}?`, bAng, {label:H(o[0]), hint:`Углы при основании равны, а вместе они ${180 - apex}°. Раздели пополам.`, wrongs:[{v:180 - apex, msg:`${180 - apex}° — это два угла при основании вместе. Они равны: раздели сумму пополам.`}],
+          short:`${H(o[0])} = ${H(o[1])}, вместе ${180 - apex}°, значит ${H(o[0])} = ${bAng}°.`, place:[{sec:o[0], v:bAng}, {sec:o[1], v:bAng}]})]}];
+    ask = `Найдите ${H(o[0])}.`; ans = bAng; tgt = o[0]; known0 = [{sec:X, v:apex}];
+    hint5 = `Сначала найди, сколько градусов остаётся на два угла при основании (180° минус вершинный). Они равны.`;
+  }
+  const t = mkTri('tiso', fig, keys, `В треугольнике ${triNameH(fig)} ${side(X, o[0])} = ${side(X, o[1])}, ${apexGiven ? H(X) : H(o[0])} = ${apexGiven ? apex : bAng}°`, ask, ans, steps, hint5, tgt, {tName:H(tgt), known0, meta:{X, o, apex, bAng, apexGiven}});
+  t.ticks = ticks;
+  return t;
+}
+function genText(){
+  const forward = rnd() < 0.5, at = pick(['A', 'B', 'C']), o = tOther(at), from = o[0], other = o[1];
+  for(let g = 0; g < 5000; g++){
+    const a = ri(34, 80), b = ri(34, 80), n = 180 - a - b;
+    if(n < 34 || n > 100 || Math.abs(a - b) < 6) continue;
+    const an = {}; an[from] = a; an[other] = b; an[at] = n;
+    const fig = tFig(an, {ext:{at, from}}), H = r => vNameH(fig, r, false), L = r => tL(fig, r);
+    const extAng = angOf(fig, at, other, 'D'), nAng = tVAng(fig, at), e = a + b;
+    const keys = {}; ['A', 'B', 'C'].forEach(r => { keys[r] = TKA(fig, r); }); keys.ext = {ang:extAng};
+    const extN = nm('∠' + L(other) + L(at) + L('D')), tri = triNameH(fig);
+    const adjQ = tChoiceQ(`Какие это углы: ${H(at)} и ${extN}?`, [{id:'adj', label:'СМЕЖНЫЕ'}, {id:'vert', label:'ВЕРТИКАЛЬНЫЕ'}, {id:'none', label:'НИ ТО НИ ДРУГОЕ'}], 'adj',
+      {vert:`У вертикальных углов нет общей стороны, а здесь общая сторона ${nm(L(at) + L(other))} есть. Лежат ли два других луча на одной прямой?`, none:`Общая сторона ${nm(L(at) + L(other))} есть, а лучи ${nm(L(at) + L(from))} и ${nm(L(at) + L('D'))} лежат на одной прямой (${nm(L(from) + L(at))} продолжена до точки D).`},
+      `${H(at)} и ${extN} — смежные: общая сторона ${nm(L(at) + L(other))}, а ${nm(L(from) + L(at))} продолжена до точки D.`, 'layout');
+    const fillsA = [{kind:'ang', v:at, p:from, q:other, pat:'a'}, {kind:'ang', v:at, p:other, q:'D', pat:'b'}];
+    let steps, cond, ask, ans, tgt, known0;
+    if(forward){
+      steps = [
+        {angles:[{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}], qs:[tRuleQ('sum180', RULE_POOL),
+          tNumQ(`Чему равен ${H(at)}?`, n, {label:H(at), hint:`Из 180° вычти два известных угла: ${a}° и ${b}°.`, wrongs:[{v:a + b, msg:`${a + b}° — это сумма двух известных углов. Третий угол: вычти её из 180°.`}],
+            short:`${H(at)} = 180° − ${a}° − ${b}° = ${n}°.`, place:[{sec:at, v:n}]})]},
+        {angles:fillsA, qs:[adjQ, tRuleQ('adj180', RULE_POOL),
+          tNumQ(`Чему равен внешний угол ${extN}?`, e, {label:`внешний угол ${extN}`, hint:`Смежные углы дают 180°: вычти ${H(at)} (${n}°) из 180°. Проверка: внешний угол равен сумме двух несмежных, ${a}° + ${b}°.`,
+            wrongs:[{v:n, msg:`${n}° — это ${H(at)}, внутренний угол. Внешний угол с ним смежный: он равен 180° минус ${n}°.`}],
+            short:`${extN} = 180° − ${n}° = ${e}° (и правда: ${a}° + ${b}° = ${e}°).`, place:[{sec:'ext', v:e}]})]}];
+      cond = `В треугольнике ${tri} ${H(from)} = ${a}°, ${H(other)} = ${b}°`; ask = `Найдите внешний угол ${extN} при вершине ${nm(L(at))}.`; ans = e; tgt = 'ext'; known0 = [{sec:from, v:a}, {sec:other, v:b}];
+    }else{
+      steps = [
+        {angles:fillsA, qs:[adjQ, tRuleQ('adj180', RULE_POOL),
+          tNumQ(`Чему равен ${H(at)}?`, n, {label:H(at), hint:`${H(at)} и ${extN} смежные: вместе 180°. Вычти внешний угол (${e}°) из 180°.`, wrongs:[{v:e, msg:`${e}° — это внешний угол ${extN}. А ${H(at)} с ним смежный: 180° минус ${e}°.`}],
+            short:`${H(at)} = 180° − ${e}° = ${n}°.`, place:[{sec:at, v:n}]})]},
+        {angles:[{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}], qs:[tRuleQ('sum180', RULE_POOL),
+          tNumQ(`Чему равен ${H(other)}?`, b, {label:H(other), hint:`Из 180° вычти ${H(from)} (${a}°) и ${H(at)} (${n}°). Или короче: внешний угол ${e}° минус ${a}°.`, wrongs:[{v:180 - a, msg:`Ты вычел только один угол. Нужно вычесть оба: ${a}° и ${n}°.`}],
+            short:`${H(other)} = 180° − ${a}° − ${n}° = ${b}° (и правда: ${e}° − ${a}° = ${b}°).`, place:[{sec:other, v:b}]})]}];
+      cond = `В треугольнике ${tri} внешний угол ${extN} равен ${e}°, ${H(from)} = ${a}°`; ask = `Найдите ${H(other)}.`; ans = b; tgt = other; known0 = [{sec:from, v:a}, {sec:'ext', v:e}];
+    }
+    const t = mkTri('text', fig, keys, cond, ask, ans, steps, forward ? `Сначала найди третий угол треугольника, потом внешний угол: он смежный с ним (180° минус третий угол).` : `Внешний угол смежный с ${H(at)}: найди ${H(at)}. Потом сумма углов треугольника даёт ${H(other)}.`, tgt, {tName:tgt === 'ext' ? extN : H(tgt), known0, meta:{at, from, other, a, b, n, e, forward}});
+    return t;
+  }
+}
+function genTcev(){
+  const bis = rnd() < 0.5;
+  for(let tries = 0; tries < 300; tries++){
+    const V = pick(['A', 'B', 'C']), uw = tOther(V), U = uw[0], W = uw[1];
+    if(bis){
+      const m = pick([50, 60, 64, 70, 76, 80, 84, 90, 100]), n = ri(34, 80), k = 180 - m - n;
+      if(k < 34 || k > 100 || Math.abs(n - k) < 6) continue;
+      const an = {}; an[V] = m; an[U] = n; an[W] = k;
+      const fig = tFig(an, {cevian:{from:V, spec:'bisector'}}), H = r => vNameH(fig, r, false), L = r => tL(fig, r);
+      if(angList(fig).some(a => a.size < 12) || dist(fig.P.D, fig.P[U]) < 22 || dist(fig.P.D, fig.P[W]) < 22) continue;
+      const half = m / 2, ldn = 180 - half - k;                      // ∠MLN в треугольнике V-D-W
+      const ang1 = angOf(fig, V, U, 'D'), ang2 = angOf(fig, V, 'D', W), angD = angOf(fig, 'D', V, W);
+      const keys = {half:{ang:ang2}, [W]:TKA(fig, W), [V]:TKA(fig, V), angD:{ang:angD}};
+      const VD = nm(L(V) + L('D')), angV = nm('∠' + L(U) + L(V) + L(W)), aHalf = nm('∠' + L('D') + L(V) + L(W)), aD = nm('∠' + L(V) + L('D') + L(W));
+      const whatQ = tChoiceQ(`Что известно про отрезок ${VD} в треугольнике ${triNameH(fig)}?`, [{id:'bis', label:'ЭТО БИССЕКТРИСА: ДЕЛИТ УГОЛ ПОПОЛАМ'}, {id:'med', label:'ЭТО МЕДИАНА: ДЕЛИТ СТОРОНУ ПОПОЛАМ'}, {id:'hei', label:'ЭТО ВЫСОТА: ПЕРПЕНДИКУЛЯРНА СТОРОНЕ'}], 'bis',
+        {med:`Медиана делит пополам сторону, а в условии сказано про биссектрису. Что делит биссектриса?`, hei:`Высота перпендикулярна стороне, а в условии сказано про биссектрису. Что делит биссектриса?`}, `${VD} — биссектриса: она делит угол ${angV} пополам.`, 'cevMix');
+      const steps = [
+        {angles:[{kind:'ang', v:V, p:U, q:'D', pat:'a'}, {kind:'ang', v:V, p:'D', q:W, pat:'b'}], qs:[whatQ, tRuleQ('bis', RULE_POOL),
+          tNumQ(`Чему равен ${aHalf}?`, half, {label:aHalf, hint:`Биссектриса делит угол ${angV} (${m}°) пополам. Раздели ${m} на 2.`, wrongs:[{v:m, msg:`${m}° — это весь угол ${angV}. ${aHalf} — только его половина.`}], short:`${aHalf} = ${m}° : 2 = ${half}°.`, place:[{sec:'half', v:half}]})]},
+        {angles:[{kind:'tri', pts:[V, 'D', W], pat:'a'}], qs:[tRuleQ('sum180', RULE_POOL),
+          tNumQ(`Чему равен ${aD}?`, ldn, {label:aD, hint:`В треугольнике ${nm('△' + L(V) + L('D') + L(W))} известны два угла: ${half}° и ${k}°. Вычти их из 180°.`, wrongs:[{v:180 - m - k, msg:`Ты взял весь угол ${m}° вместо половины ${half}°. В этом треугольнике угол при ${nm(L(V))} равен ${half}°.`}],
+            short:`${aD} = 180° − ${half}° − ${k}° = ${ldn}°.`, place:[{sec:'angD', v:ldn}]})]}];
+      return mkTri('tcev', fig, keys, `В треугольнике ${triNameH(fig)} отрезок ${VD} — биссектриса, ${angV} = ${m}°, ${H(W)} = ${k}°`, `Найдите ${aD}.`, ldn, steps,
+        `Биссектриса делит угол пополам. Затем рассмотри треугольник ${nm('△' + L(V) + L('D') + L(W))} и сумму его углов.`, 'angD', {tName:aD, known0:[{sec:V, v:m}, {sec:W, v:k}], meta:{V, U, W, m, k, half, ldn}});
+    }
+    const kU = ri(36, 72), nW = ri(36, 72), vv = 180 - kU - nW;
+    if(vv < 34 || vv > 100 || Math.abs(kU - nW) < 6) continue;
+    const an = {}; an[U] = kU; an[W] = nW; an[V] = vv;
+    const fig = tFig(an, {cevian:{from:V, spec:'height'}}), H = r => vNameH(fig, r, false), L = r => tL(fig, r);
+    if(angList(fig).some(a => a.size < 12) || dist(fig.P.D, fig.P[U]) < 22 || dist(fig.P.D, fig.P[W]) < 22) continue;
+    const need = 90 - kU;
+    const angHD = angOf(fig, 'D', V, U), angVU = angOf(fig, V, U, 'D');
+    const keys = {[U]:TKA(fig, U), hd:{ang:angHD}, vu:{ang:angVU}};
+    const VD = nm(L(V) + L('D')), aD = nm('∠' + L(V) + L('D') + L(U)), aV = nm('∠' + L(U) + L(V) + L('D'));
+    const whatQ = tChoiceQ(`Что известно про отрезок ${VD} в треугольнике ${triNameH(fig)}?`, [{id:'hei', label:'ЭТО ВЫСОТА: ПЕРПЕНДИКУЛЯРНА СТОРОНЕ'}, {id:'bis', label:'ЭТО БИССЕКТРИСА: ДЕЛИТ УГОЛ ПОПОЛАМ'}, {id:'med', label:'ЭТО МЕДИАНА: ДЕЛИТ СТОРОНУ ПОПОЛАМ'}], 'hei',
+      {bis:`Биссектриса делит угол пополам, а в условии сказано про высоту. Как расположена высота относительно стороны?`, med:`Медиана делит сторону пополам, а в условии сказано про высоту. Как расположена высота относительно стороны?`}, `${VD} — высота: она перпендикулярна стороне ${nm(L(U) + L(W))}.`, 'cevMix');
+    const steps = [
+      {angles:[{kind:'ang', v:'D', p:V, q:U, pat:'a'}], qs:[whatQ, tRuleQ('height', RULE_POOL),
+        tNumQ(`Чему равен ${aD}?`, 90, {label:aD, hint:'Высота перпендикулярна стороне: угол между ними прямой. Сколько градусов в прямом угле?', wrongs:[{v:180, msg:'180° — развёрнутый угол. Перпендикуляр даёт прямой угол — половину развёрнутого.'}], short:`${VD} ⊥ ${nm(L(U) + L(W))}, значит ${aD} = 90°.`, place:[{sec:'hd', v:90}]})]},
+      {angles:[{kind:'tri', pts:[V, 'D', U], pat:'a'}], qs:[tRuleQ('sum180', RULE_POOL),
+        tNumQ(`Чему равен ${aV}?`, need, {label:aV, hint:`В треугольнике ${nm('△' + L(V) + L('D') + L(U))} уже известны два угла: 90° и ${kU}°. Вычти их из 180°.`, wrongs:[{v:90 - nW, msg:`Проверь, какой угол лежит при вершине ${nm(L(U))}: это ${H(U)} = ${kU}°.`}, {v:180 - kU, msg:`Ты вычел только ${kU}°. Нужно вычесть ещё прямой угол 90°.`}],
+          short:`${aV} = 180° − 90° − ${kU}° = ${need}°.`, place:[{sec:'vu', v:need}]})]}];
+    return mkTri('tcev', fig, keys, `В треугольнике ${triNameH(fig)} отрезок ${VD} — высота, ${H(U)} = ${kU}°`, `Найдите ${aV}.`, need, steps,
+      `Высота образует с стороной прямой угол. Потом рассмотри прямоугольный треугольник ${nm('△' + L(V) + L('D') + L(U))} и сумму его углов.`, 'vu', {tName:aV, known0:[{sec:U, v:kU}], meta:{V, U, W, kU, need}});
+  }
+}
+function genTper(){
+  const variantB = rnd() < 0.4;
+  const X = pick(['A', 'B', 'C']), o = tOther(X);
+  if(!variantB){
+    const Lg = ri(5, 12), b = ri(Math.max(3, Math.ceil(0.5 * Lg)), Math.floor(1.7 * Lg)), P = 2 * Lg + b;     // основание не слишком мало и не слишком велико: углы чертежа 29°–76° при основании
+    const S = {}; S[skey(X, o[0])] = Lg * 20; S[skey(X, o[1])] = Lg * 20; S[skey(o[0], o[1])] = b * 20;
+    const fig = makeTriFig({sides:S, base:skey(o[0], o[1]), tilt:ri(-8, 8), mirror:rnd() < 0.5}), L = r => tL(fig, r), side = (a, c) => nm(L(a) + L(c));
+    const keys = {}; keys[skey(X, o[0])] = {seg:[X, o[0]]}; keys[skey(X, o[1])] = {seg:[X, o[1]]}; keys[skey(o[0], o[1])] = {seg:[o[0], o[1]]};
+    const key = skey(X, o[0]);
+    const steps = [
+      {angles:[{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}], qs:[tRuleQ('perim', RULE_POOL),
+        tNumQ(`Чему равна сумма боковых сторон ${side(X, o[0])} + ${side(X, o[1])}?`, P - b, {label:`сумма боковых сторон`, hint:`Периметр ${P} — это сумма всех трёх сторон. Основание ${side(o[0], o[1])} = ${b}. Вычти его.`,
+          wrongs:[{v:P, msg:`${P} — это периметр, то есть все три стороны. Нужна сумма только боковых: вычти основание.`}, {v:b, msg:`${b} — это основание. Нужна сумма боковых сторон.`}],
+          short:`${side(X, o[0])} + ${side(X, o[1])} = ${P} − ${b} = ${P - b}.`})]},
+      {angles:[{kind:'side', a:X, b:o[0]}, {kind:'side', a:X, b:o[1]}], qs:[tRuleQ('isoSide', RULE_POOL),
+        tNumQ(`Чему равна боковая сторона ${side(X, o[0])}?`, Lg, {label:`боковая сторона ${side(X, o[0])}`, hint:`Боковые стороны равны, а вместе они ${P - b}. Раздели пополам.`, wrongs:[{v:P - b, msg:`${P - b} — это обе боковые стороны вместе. Они равны: раздели пополам.`}],
+          short:`${side(X, o[0])} = ${P - b} : 2 = ${Lg}.`, place:[{sec:key, v:Lg}, {sec:skey(X, o[1]), v:Lg}]})]}];
+    return mkTri('tper', fig, keys, `Периметр равнобедренного треугольника ${triNameH(fig)} (${side(X, o[0])} = ${side(X, o[1])}) равен ${P} см, основание ${side(o[0], o[1])} равно ${b} см`, `Найдите боковую сторону ${side(X, o[0])}.`, Lg, steps,
+      `Периметр — сумма всех сторон. Вычти основание и раздели остаток на две равные боковые стороны.`, key, {unit:' см', tName:side(X, o[0]), known0:[{sec:skey(o[0], o[1]), v:b}], meta:{X, o, Lg, b, P, variant:'A'}});
+  }
+  // вариант B: «две стороны равнобедренного треугольника равны x и y»: x — не может быть боковой
+  const x = ri(2, 8), y = ri(2 * x, 2 * x + 6), P = 2 * y + x;
+  const fig = makeTriFig({angles:(() => { const a = {}; a[X] = 40; a[o[0]] = a[o[1]] = 70; return a; })(), base:skey(o[0], o[1]), tilt:ri(-8, 8), mirror:rnd() < 0.5}), L = r => tL(fig, r);
+  const keys = {}; keys[skey(o[0], o[1])] = {seg:[o[0], o[1]]};
+  const steps = [
+    {angles:[{kind:'tri', pts:['A', 'B', 'C'], pat:'a'}], qs:[
+      tChoiceQ(`Может ли существовать равнобедренный треугольник с боковыми сторонами ${x} и ${x} и основанием ${y}?`, [{id:'no', label:`НЕТ: ${x} + ${x} НЕ БОЛЬШЕ ${y}`}, {id:'yes', label:'ДА, МОЖЕТ'}, {id:'dunno', label:'ЗАВИСИТ ОТ УГЛОВ'}], 'no',
+        {yes:`Проверь неравенство треугольника: сумма двух сторон должна быть больше третьей. Сложи ${x} + ${x} и сравни с ${y}.`, dunno:`Существование треугольника определяется сторонами: сумма двух сторон должна быть больше третьей. Проверь ${x} + ${x} и ${y}.`},
+        `${x} + ${x} = ${2 * x}, это не больше ${y}: треугольника со сторонами ${x}, ${x}, ${y} не существует.`, 'tRule_ineq'),
+      tRuleQ('ineq', RULE_POOL),
+      tNumQ(`Значит, боковые стороны по ${y}, а основание ${x}. Чему равен периметр?`, P, {label:'периметр', hint:`Сложи все три стороны: ${y} + ${y} + ${x}.`, wrongs:[{v:2 * x + y, msg:`Ты сложил ${x} + ${x} + ${y}, но такого треугольника нет. Боковые стороны здесь по ${y}.`}], short:`${y} + ${y} + ${x} = ${P}.`})]}];
+  return mkTri('tper', fig, keys, `Две стороны равнобедренного треугольника ${triNameH(fig)} равны ${x} см и ${y} см`, 'Найдите периметр.', P, steps,
+    `Какая из двух сторон может быть боковой? Проверь неравенство треугольника: сумма двух сторон должна быть больше третьей.`, null, {unit:' см', tName:'периметр', scale:true, banner:'РИСУНОК НЕ В МАСШТАБЕ', meta:{X, o, x, y, P, variant:'B'}});
+}
+
+/* =====================================================================
+   16. САМОПРОВЕРКА МАТЕМАТИКИ: ТРЕУГОЛЬНИКИ (режимы 6–10)
+   selfCheckTri(200) — по 40 задач на режим. Все утверждения задач проверяются по
+   координатам нарисованного чертежа: углы измеряются, стороны измеряются, «медиана»,
+   «биссектриса», «высота», «равные стороны» и «90°» проверяются на самом чертеже;
+   подписанные числа сравниваются с нарисованными углами и сторонами (кроме задач
+   «рисунку не верь», где расхождение — намеренное и тоже проверяется).
+   ===================================================================== */
+function selfCheckTri(N, seed){
+  N = N || 200;
+  const prev = _rng, SEED = seed || 20261102;
+  setRng(mulberry32(SEED));
+  const R = {N, seed:SEED, tasks:{}, checks:{}, fails:[], total:0, topic:'tri'};
+  let ctx = '';
+  const chk = (name, cond, detail) => {
+    const c = R.checks[name] || (R.checks[name] = {ok:0, bad:0});
+    if(cond) c.ok++; else { c.bad++; if(R.fails.length < 15) R.fails.push(`${ctx} — ${name}${detail !== undefined ? ' (' + detail + ')' : ''}`); }
+  };
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  const eqLen = (a, b) => Math.abs(a - b) / Math.max(a, b) < 0.01;
+  const sideKindTol = s => { const ab = eqLen(s[0], s[1]), bc = eqLen(s[1], s[2]), ac = eqLen(s[0], s[2]); return ab && bc ? 'equi' : (ab || bc || ac) ? 'iso' : 'scal'; };
+  const lens = fig => [fig.len.AB, fig.len.BC, fig.len.AC];
+  const measureKey = (fig, d) => d.ang ? d.ang.size : dist(fig.P[d.seg[0]], fig.P[d.seg[1]]);
+  const roleAng = (fig, r) => fig.ang[r];
+
+  function checkFig(fig, svg){
+    const P = fig.P, a = fig.ang, s = a.A + a.B + a.C;
+    chk('сумма углов нарисованного треугольника 180°', near(s, 180, 0.01), s.toFixed(3));
+    chk('каждый угол треугольника на чертеже от 20° до 160°', ['A', 'B', 'C'].every(r => a[r] >= 20 && a[r] <= 160), ['A', 'B', 'C'].map(r => a[r].toFixed(1)).join(','));
+    chk('все точки чертежа внутри рамки 360×360 с полем', fig.roles.every(r => P[r][0] >= 14 && P[r][0] <= 346 && P[r][1] >= 14 && P[r][1] <= 346), fig.roles.map(r => P[r].map(Math.round).join(':')).join(' '));
+    chk('буквы вершин разные', new Set(fig.roles.map(r => fig.L[r])).size === fig.roles.length);
+    chk('проведённый отрезок кончается не ближе 20 px к вершине стороны', !fig.cev || tOther(fig.cev).every(r => dist(P.D, P[r]) >= 20));
+    chk('точка D (если есть) лежит на проведённом отрезке', !P.D || (fig.cev ? distToSeg(P.D, P[tOther(fig.cev)[0]], P[tOther(fig.cev)[1]]) < 0.01 : fig.ext ? dist(P.D, P[fig.ext.at]) > 5 && Math.abs(angleAt(P[fig.ext.at], P[fig.ext.from], P.D) - 180) < 0.01 : true));
+    const m = svgTriAngles(svg);
+    chk('нарисованные вершины в SVG дают те же углы, что в данных', !!m && ['A', 'B', 'C'].every((r, i) => near(m[i], a[r], 0.3)), m && m.map(x => x.toFixed(1)).join(','));
+  }
+  const parseAng = (fig, s) => denoteAngle(fig, s);
+
+  /* --- режим 6 --- */
+  function check6(t){
+    const fig = t.fig, L = r => fig.L[r];
+    if(t.kind === 'angle'){
+      const d = parseAng(fig, t.text);
+      chk('запись угла: вершина — средняя буква и это нужный угол', !!d && d.kind === 'angle' && d.id === t.target.id && t.text[2] === L(t.target.v), t.text);
+      const w = wedgeParams(t.target), V = fig.P[t.target.v], rr = angR(fig, t.target) * 0.6, c = V[0] + rr * Math.cos(rad(w.start + w.size / 2)), cy = V[1] - rr * Math.sin(rad(w.start + w.size / 2));
+      chk('нажатие в середине сектора засчитывается как этот угол', triTapAngles(fig, c, cy).some(a => a.id === t.target.id));
+    }else if(t.kind === 'side'){
+      chk('запись отрезка: две разные буквы, это нужный отрезок', denoteSeg(fig, t.text) === t.target.id, t.text);
+      const m = lerp(fig.P[t.target.a], fig.P[t.target.b], .5);
+      chk('нажатие на середину отрезка засчитывается', triTapSegs(fig, m[0], m[1]).some(s => s.id === t.target.id));
+    }else{
+      const d = denoteTri(fig, t.text);
+      chk('запись треугольника: три буквы — нужный треугольник', !!d && d.kind === 'tri' && d.id === t.target.id, t.text);
+    }
+    if(t.variant === 'name'){
+      const o = t.opts, ok = o.list.filter(x => x.kind === 'ok');
+      chk('4 варианта ответа', o.list.length === 4);
+      chk('ровно один верный вариант, и он указан правильно', ok.length === 1 && o.list[o.correct].kind === 'ok');
+      const ids = o.list.map(x => t.kind === 'angle' ? (parseAng(fig, x.text) || {}).id : t.kind === 'side' ? denoteSeg(fig, x.text) : (denoteTri(fig, x.text) || {}).id);
+      chk('варианты обозначают разные объекты (нет повторов)', new Set(ids).size === 4 && ids.every(x => x), ids.join(','));
+      o.list.forEach(x => {
+        if(t.kind === 'angle'){
+          const d = parseAng(fig, x.text); if(!d){ chk('вариант — корректная запись угла', false, x.text); return; }
+          if(x.kind === 'ok') chk('верный вариант = выделенный угол', d.id === t.target.id && x.text[2] === L(t.target.v));
+          else{
+            chk('неверный вариант — другой угол', d.id !== t.target.id && d.kind === 'angle');
+            if(x.kind === 'vertexMid') chk('ловушка: вершина выделенного угла стоит с краю записи', x.text[2] !== L(t.target.v) && x.text.includes(L(t.target.v)));
+            if(x.kind === 'neighbor'){ const b = angById(fig, d.id); chk('«соседний»: та же вершина, углы не вложены', b.v === t.target.v && !(angHas(t.target, b.c1.dir) && angHas(t.target, b.c2.dir)) && !(angHas(b, t.target.c1.dir) && angHas(b, t.target.c2.dir))); }
+            if(x.kind === 'wider'){ const b = angById(fig, d.id); chk('«охватывающий»: та же вершина, содержит выделенный', b.v === t.target.v && b.size > t.target.size && angHas(b, t.target.c1.dir) && angHas(b, t.target.c2.dir)); }
+          }
+        }else if(t.kind === 'side'){
+          const id = denoteSeg(fig, x.text);
+          if(x.kind === 'ok') chk('верный вариант = выделенный отрезок', id === t.target.id);
+          else{
+            chk('неверный вариант — другой отрезок', !!id && id !== t.target.id);
+            const s = segList(fig).find(z => z.id === id), sh = [s.a, s.b].filter(r => r === t.target.a || r === t.target.b);
+            if(x.kind === 'neighbor') chk('«соседний»: ровно один общий конец и не на одной прямой', sh.length === 1 && angleAt(fig.P[sh[0]], fig.P[s.a === sh[0] ? s.b : s.a], fig.P[t.target.a === sh[0] ? t.target.b : t.target.a]) > 0.5 && angleAt(fig.P[sh[0]], fig.P[s.a === sh[0] ? s.b : s.a], fig.P[t.target.a === sh[0] ? t.target.b : t.target.a]) < 179.5);
+            if(x.kind === 'wider') chk('«вся сторона»: лежит на одной прямой и длиннее', sh.length === 1 && s.len > t.target.len);
+            if(x.kind === 'part') chk('«часть»: лежит на одной прямой и короче', sh.length === 1 && s.len < t.target.len);
+          }
+        }else{
+          const d = denoteTri(fig, x.text);
+          if(x.kind === 'ok') chk('верный вариант = выделенный треугольник', !!d && d.kind === 'tri' && d.id === t.target.id);
+          if(x.kind === 'triOther') chk('другой настоящий треугольник', !!d && d.kind === 'tri' && d.id !== t.target.id);
+          if(x.kind === 'triDegenerate') chk('ловушка «три точки на одной прямой» — это не треугольник', !!d && d.kind === 'degenerate');
+        }
+      });
+    }
+  }
+  /* --- режим 7 --- */
+  function check7(t){
+    const fig = t.fig, P = fig.P;
+    chk('в вопросе есть названия точек, а у вариантов — одинаковый набор кнопок', t.opts.length >= 3 && t.opts.some(o => o.id === t.ans));
+    ['median', 'bisector', 'height', 'none'].includes(t.kind) ? check7cev(t) : t.kind === 'sides' ? check7sides(t) : t.kind === 'angles' ? check7angles(t) : check7scale(t);
+    chk('для каждого неверного ответа есть подсказка', t.opts.filter(o => o.id !== t.ans).every(o => { const h = hint7(t, o.id); return h && h.html && h.html.length > 10 && h.em; }));
+    chk('развёрнутое и короткое пояснение заполнены', t.why.length > 20 && t.whyShort.length > 10);
+  }
+  function check7cev(t){
+    const fig = t.fig, P = fig.P, V = t.V, U = t.U, W = t.W, pr = cevProps(fig);
+    const med = near(dist(P[U], P.D), dist(P.D, P[W]), 0.01 * dist(P[U], P[W])), bis = near(angleAt(P[V], P[U], P.D), angleAt(P[V], P.D, P[W]), 0.3), hei = near(angleAt(P.D, P[V], P[U]), 90, 0.3);
+    const truth = med && !bis && !hei ? 'median' : bis && !med && !hei ? 'bisector' : hei && !med && !bis ? 'height' : !med && !bis && !hei ? 'none' : 'many';
+    chk('верный ответ совпадает с тем, что действительно верно на чертеже', truth === t.ans, truth + ' vs ' + t.ans);
+    chk('нарисован ровно один «вариант» (не бывает двух сразу)', truth !== 'many');
+    chk('D лежит внутри стороны, не в вершине', dist(P.D, P[U]) > 15 && dist(P.D, P[W]) > 15);
+    const mk = t.marks;
+    if(t.kind === 'median') chk('риски стоят на двух равных отрезках', mk.ticks.length === 2 && near(dist(P[mk.ticks[0].a], P[mk.ticks[0].b]), dist(P[mk.ticks[1].a], P[mk.ticks[1].b]), 0.01 * dist(P[U], P[W])));
+    if(t.kind === 'bisector') chk('одинаковые дуги стоят на двух равных углах', mk.marks.length === 2 && near(mk.marks[0].ang.size, mk.marks[1].ang.size, 0.3));
+    if(t.kind === 'height') chk('квадратик стоит на прямом угле (90°)', mk.right.length === 1 && near(angleAt(P[mk.right[0].v], P[mk.right[0].p], P[mk.right[0].q]), 90, 0.3));
+    if(t.kind === 'none'){
+      if(t.sub === 'mid') chk('числа на отрезках пропорциональны нарисованным длинам и не равны', near(dist(P[U], P.D) / dist(P.D, P[W]), t.nums.p / t.nums.q, 0.005) && t.nums.p !== t.nums.q, JSON.stringify(t.nums));
+      if(t.sub === 'ang') chk('числа в углах равны нарисованным углам и не равны друг другу', near(angleAt(P[V], P[U], P.D), t.nums.a1, 0.1) && near(angleAt(P[V], P.D, P[W]), t.nums.a2, 0.1) && t.nums.a1 !== t.nums.a2 && t.nums.a1 + t.nums.a2 === Math.round(fig.ang[V]), JSON.stringify(t.nums));
+      if(t.sub === 'perp') chk('число у D равно нарисованному углу и не равно 90°', near(angleAt(P.D, P[V], P[U]), t.nums.theta, 0.1) && t.nums.theta !== 90);
+    }
+    chk('во всех четырёх вариантах нет повторов', new Set(t.opts.map(o => o.id)).size === 4);
+  }
+  function check7sides(t){
+    const fig = t.fig, real = sideKindTol(lens(fig));
+    if(t.nums){
+      const k = fig.len.AB / t.nums[0];
+      chk('числа на сторонах пропорциональны нарисованным сторонам (в масштабе)', near(fig.len.BC / t.nums[1], k, 0.01 * k) && near(fig.len.AC / t.nums[2], k, 0.01 * k), t.nums.join(','));
+      chk('вид по числам = верный ответ', sideKind(t.nums) === t.ans, t.nums + ' ' + t.ans);
+      const m = Math.max.apply(null, t.nums); chk('числа образуют настоящий треугольник (неравенство)', m < t.nums.reduce((a, b) => a + b, 0) - m);
+    }else{
+      chk('вид по нарисованным сторонам = верный ответ', real === t.ans, real + ' vs ' + t.ans);
+      const tk = t.marks.ticks, len = (a, b) => dist(fig.P[a], fig.P[b]);
+      chk('стороны с одинаковым числом рисок равны, с разным — различаются', tk.every((x, i) => tk.every((y, j) => i === j || (x.n === y.n) === eqLen(len(x.a, x.b), len(y.a, y.b)))));
+    }
+  }
+  function check7angles(t){
+    const fig = t.fig, an = ['A', 'B', 'C'].map(r => fig.ang[r]), lab = t.marks.angLabels.map(x => parseInt(x.text, 10));
+    chk('подписанные углы равны нарисованным', ['A', 'B', 'C'].every((r, i) => near(fig.ang[r], lab[i], 0.2)), lab + ' vs ' + an.map(x => x.toFixed(1)));
+    chk('сумма подписанных углов 180°', lab[0] + lab[1] + lab[2] === 180);
+    chk('вид по углам (по числам) = верный ответ', angKind(lab) === t.ans, lab + ' ' + t.ans);
+    chk('квадратик есть только у угла 90°', (t.marks.right.length === 1) === (t.ans === 'right') && t.marks.right.every(q => near(fig.ang[q.v], 90, 0.2)));
+    chk('все углы от 28° до 140° (хорошо видны)', an.every(x => x >= 27.9 && x <= 140.1));
+  }
+  function check7scale(t){
+    const fig = t.fig, drawn = sideKindTol(lens(fig));
+    chk('вид по числам = верный ответ', sideKind(t.nums) === t.ans, t.nums + ' ' + t.ans);
+    chk('нарисованное НЕ совпадает с ответом (задача помечена «рисунку не верь»)', drawn !== t.ans && t.banner.length > 0, drawn + ' vs ' + t.ans);
+    const m = Math.max.apply(null, t.nums); chk('числа образуют настоящий треугольник (неравенство)', m < t.nums.reduce((a, b) => a + b, 0) - m);
+  }
+  /* --- режим 8 --- */
+  function check8(t){
+    const fig = t.fig, P = fig.P;
+    if(t.kind === 'tvals'){
+      const nums = degNums(t.text);
+      chk('числа в условии = нарисованным углам', t.given.every((r, i) => near(fig.ang[r], nums[i], 0.2)) && nums.length === t.given.length, nums + ' vs ' + t.given.map(r => fig.ang[r].toFixed(1)));
+      chk('все ожидаемые числа равны нарисованным углам', Object.keys(t.expected).every(r => near(fig.ang[r], t.expected[r], 0.2)));
+      chk('числа — целые градусы', Object.keys(t.expected).every(r => Number.isInteger(t.expected[r])) && t.chips.every(Number.isInteger));
+      if(t.X){ const o = tOther(t.X); chk('в условии «две стороны равны» — на чертеже они действительно равны', eqLen(dist(P[t.X], P[o[0]]), dist(P[t.X], P[o[1]]))); chk('углы при основании на чертеже равны', near(fig.ang[o[0]], fig.ang[o[1]], 0.2)); }
+      chk('верное заполнение проходит проверку, пустой чертёж — нет', checkTvals(t, Object.assign({}, t.expected)).length === 0 && checkTvals(t, {}).length > 0);
+      if(t.form === 'isoApex'){ const o = tOther(t.X), bad = Object.assign({}, t.expected); bad[o[0]] = t.expected[t.X]; chk('вершинный угол, записанный в угол при основании, замечается', checkTvals(t, bad).some(x => x.kind === 'isoApex')); }
+      if(t.form === 'isoBase'){ const o = tOther(t.X), part = {}; part[o[0]] = t.expected[o[0]]; chk('пропущенный равный угол при основании замечается', checkTvals(t, part).some(x => x.kind === 'skipEq')); }
+      chk('имена углов: ∠K или ∠KMN с вершиной посередине', ['A', 'B', 'C'].every(r => { const s = plainText(t.nameH[r]); return /^∠.$/.test(s) ? s[1] === fig.L[r] : /^∠...$/.test(s) && s[2] === fig.L[r]; }), ['A', 'B', 'C'].map(r => plainText(t.nameH[r])).join(' '));
+    }else{
+      chk('ровно один вариант-следствие верен (по измерению на чертеже)', t.opts.filter(o => tpairTruth(t, o) === true).length === 1 && t.opts.every(o => tpairTruth(t, o) === o.truth), t.opts.map(o => o.text + '=' + tpairTruth(t, o)).join(' | '));
+      chk('вариантов три, без повторов', t.opts.length === 3 && new Set(t.opts.map(o => o.text)).size === 3);
+      if(t.picks.type === 'side'){
+        const dd = t.picks.items.map(id => { const s = segList(fig).find(z => z.id === id); return s ? s.len : -1; });
+        chk('отмечаемые отрезки существуют и равны на чертеже', dd.every(x => x > 0) && eqLen(dd[0], dd[1]), dd.map(x => x.toFixed(1)).join(','));
+        chk('нажатие на середину каждого такого отрезка засчитывается', t.picks.items.every(id => { const s = segList(fig).find(z => z.id === id), m = lerp(P[s.a], P[s.b], .5); return triTapSegs(fig, m[0], m[1])[0].id === id; }));
+      }else{
+        const as = t.picks.items.map(id => angById(fig, id));
+        chk('отмечаемые углы существуют', as.every(a => !!a));
+        if(t.sub === 'bis') chk('два угла биссектрисы на чертеже равны', near(as[0].size, as[1].size, 0.3));
+        if(t.sub === 'hei') chk('оба угла у основания высоты прямые', as.every(a => near(a.size, 90, 0.3)));
+        // интерфейс выбирает именно первый из найденных углов, поэтому проверяем строго: нажатие в центре угла должно давать ЭТОТ угол первым
+        chk('нажатие в центре каждого такого угла выбирает именно этот угол', as.every(a => { const w = wedgeParams(a), V = P[a.v], rr = angR(fig, a) * 0.6, x = V[0] + rr * Math.cos(rad(w.start + w.size / 2)), y = V[1] - rr * Math.sin(rad(w.start + w.size / 2)); const hit = triTapAngles(fig, x, y); return hit.length > 0 && hit[0].id === a.id; }));
+      }
+      chk('есть пояснение «что следует»', t.okWhy.length > 20);
+    }
+  }
+  /* --- режимы 9 и 10 --- */
+  function check9(t){
+    const fig = t.fig, m = t.meta, P = fig.P, nums = degNums(t.cond);
+    const known = {}; (t.known0 || []).forEach(k => { known[k.sec] = k.v; });
+    // 1) известные с начала числа равны измеренным на чертеже
+    chk('известные из условия числа равны измеренным на чертеже', (t.known0 || []).every(k => { const d = t.keys[k.sec]; if(!d) return false; const v = measureKey(fig, d); if(d.ang) return near(v, k.v, 0.3); const base = t.keys[skey(m.o[0], m.o[1])]; return near(v / measureKey(fig, base), k.v / (known[skey(m.o[0], m.o[1])] || k.v), 0.01); }));
+    // 2) все числа шагов, привязанные к углам/сторонам, равны измеренным
+    let numQs = 0;
+    t.steps.forEach(step => {
+      const hl = step.angles;
+      chk('подсветка шага ссылается на существующие элементы чертежа', hl.every(f => f.kind === 'tri' ? f.pts.every(r => fig.roles.includes(r)) : f.kind === 'ang' ? !!angOf(fig, f.v, f.p, f.q) : covered(fig, f.a, f.b)));
+      step.qs.forEach(q => {
+        if(q.kind === 'choice'){
+          chk('у вопроса есть верный вариант и подсказка на каждый неверный', q.opts.some(o => o.id === q.ans) && q.opts.filter(o => o.id !== q.ans).every(o => { const h = q.hint(o.id); return h && h.html && h.html.length > 8; }));
+          chk('варианты не повторяются', new Set(q.opts.map(o => o.id)).size === q.opts.length && new Set(q.opts.map(o => o.label)).size === q.opts.length);
+        }else{
+          numQs++;
+          chk('ответ шага — целое положительное число', Number.isInteger(q.ans) && q.ans > 0);
+          q.place.forEach(p => {
+            const d = t.keys[p.sec]; if(!d){ chk('место для числа есть на чертеже', false, p.sec); return; }
+            const v = measureKey(fig, d);
+            if(d.ang) chk('число шага равно измеренному углу', near(v, p.v, 0.3), p.sec + ': ' + v.toFixed(2) + ' vs ' + p.v);
+            else if(m.variant === 'A') chk('число шага пропорционально нарисованной стороне', near(v / dist(P[m.o[0]], P[m.o[1]]), p.v / m.b, 0.01), p.sec + ': ' + p.v);
+          });
+          if(q.place.length) chk('ответ шага = число на чертеже', q.place[0].v === q.ans);
+        }
+      });
+    });
+    chk('ответ задачи = последний числовой ответ шагов', t.steps[t.steps.length - 1].qs.filter(q => q.kind === 'num').slice(-1)[0].ans === t.answer);
+    chk('подсказка для режима 10 и разбор заполнены', t.hint5.length > 20 && t.steps.every(s => s.qs.every(q => q.short && q.short.length > 8)));
+    // 3) независимая проверка по виду задачи
+    if(t.kind === 'tsum'){
+      chk('условие: ∠большой − ∠малый = d и третий угол c — по измерению', near(fig.ang[m.big] - fig.ang[m.small], m.d, 0.3) && near(fig.ang[m.third], m.c, 0.3) && nums[0] === m.d && nums[1] === m.c, nums + ' ' + (fig.ang[m.big] - fig.ang[m.small]).toFixed(2));
+      chk('ответ = измеренный искомый угол', near(measureKey(fig, t.keys[t.target]), t.answer, 0.3));
+      chk('сумма двух неизвестных углов = 180° − c', t.steps[0].qs[1].ans === 180 - m.c && near(fig.ang[m.big] + fig.ang[m.small], 180 - m.c, 0.3));
+    }else if(t.kind === 'tiso'){
+      const o = m.o;
+      chk('равные стороны на чертеже равны (боковые), условие верно', eqLen(dist(P[m.X], P[o[0]]), dist(P[m.X], P[o[1]])) && near(fig.ang[o[0]], fig.ang[o[1]], 0.3) && near(fig.ang[m.X], m.apex, 0.3) && near(fig.ang[o[0]], m.bAng, 0.3));
+      chk('условие содержит одно число — заданный угол', nums.length === 1 && nums[0] === (m.apexGiven ? m.apex : m.bAng), nums + '');
+      chk('сумма 180° = вершинный + 2 угла при основании', m.apex + 2 * m.bAng === 180);
+      chk('ответ = измеренный искомый угол', near(measureKey(fig, t.keys[t.target]), t.answer, 0.3));
+      chk('риски на боковых сторонах стоят на равных сторонах', t.ticks.length === 2 && eqLen(dist(P[t.ticks[0].a], P[t.ticks[0].b]), dist(P[t.ticks[1].a], P[t.ticks[1].b])));
+    }else if(t.kind === 'text'){
+      const ext = t.keys.ext.ang, nAng = tVAng(fig, m.at);
+      chk('внешний и внутренний угол при вершине смежные: вместе 180°', near(ext.size + nAng.size, 180, 0.01));
+      chk('внешний угол = сумме двух несмежных углов (по измерению)', near(ext.size, fig.ang[m.from] + fig.ang[m.other], 0.01));
+      chk('числа условия соответствуют чертежу', m.forward ? (near(fig.ang[m.from], m.a, 0.3) && near(fig.ang[m.other], m.b, 0.3) && nums[0] === m.a && nums[1] === m.b) : (near(ext.size, m.e, 0.3) && near(fig.ang[m.from], m.a, 0.3) && nums[0] === m.e && nums[1] === m.a), nums + '');
+      chk('ответ = измеренный искомый угол', near(measureKey(fig, t.keys[t.target]), t.answer, 0.3));
+      const adj = t.steps.find(s => s.qs.some(q => q.id === 'layout')).qs.find(q => q.id === 'layout');
+      chk('вопрос «какие это углы» отвечает «смежные»', adj.ans === 'adj');
+    }else if(t.kind === 'tcev'){
+      const pr = cevProps(fig);
+      if(m.half !== undefined){
+        chk('биссектриса на чертеже делит угол пополам', pr.bis && near(angleAt(P[m.V], P[m.U], P.D), m.half, 0.2) && near(angleAt(P[m.V], P.D, P[m.W]), m.half, 0.2) && near(fig.ang[m.V], m.m, 0.3) && near(fig.ang[m.W], m.k, 0.3));
+        chk('условие: числа m и k, ответ = измеренный угол при D', nums[0] === m.m && nums[1] === m.k && near(angleAt(P.D, P[m.V], P[m.W]), t.answer, 0.3), nums + '');
+      }else{
+        chk('высота на чертеже перпендикулярна стороне', pr.hei && near(fig.ang[m.U], m.kU, 0.3));
+        chk('условие: число kU, ответ = измеренный угол при вершине', nums[0] === m.kU && near(angleAt(P[m.V], P[m.U], P.D), t.answer, 0.3) && t.answer === 90 - m.kU, nums + '');
+      }
+    }else if(t.kind === 'tper'){
+      if(m.variant === 'A'){
+        const Pm = 2 * m.Lg + m.b, so = m.o;
+        chk('периметр = 2·боковая + основание, боковая — ответ', Pm === m.P && t.answer === m.Lg && eqLen(dist(P[m.X], P[so[0]]), dist(P[m.X], P[so[1]])));
+        const cm = Array.from(plainText(t.cond).matchAll(/(\d+) см/g)).map(x => +x[1]);
+        chk('условие содержит периметр и основание (в см)', cm[0] === m.P && cm[1] === m.b, cm + '');
+        chk('чертёж в масштабе: боковая/основание как в числах', near(dist(P[m.X], P[so[0]]) / dist(P[so[0]], P[so[1]]), m.Lg / m.b, 0.01 * m.Lg / m.b));
+        chk('треугольник существует: боковая + боковая > основание', 2 * m.Lg > m.b && m.b + m.Lg > m.Lg);
+      }else{
+        const cm = Array.from(plainText(t.cond).matchAll(/(\d+) см/g)).map(x => +x[1]);
+        chk('условие содержит x и y (в см)', cm[0] === m.x && cm[1] === m.y, cm + '');
+        chk('x не может быть боковой стороной (x + x ≤ y), а y — может (y + y > x, x + y > y)', m.x + m.x <= m.y && m.y + m.y > m.x && m.x + m.y > m.y);
+        chk('ответ = 2y + x', t.answer === 2 * m.y + m.x && t.answer === m.P);
+        chk('задача помечена «рисунок не в масштабе»', t.banner.length > 0 && t.scale);
+      }
+    }
+    chk('чертёж задачи рисуется с подписями и «?» для искомой величины', (() => { const k0 = {}; (t.known0 || []).forEach(k => { k0[k.sec] = k.v; }); const html = t.paint(k0, {fills:t.steps[0].angles}); return /<svg/.test(html) && (t.target === null || t.target === undefined || />\?</.test(html)); })());
+    chk('в условии есть минимум одно число', nums.length > 0 || /\d/.test(plainText(t.cond)));
+  }
+
+  const per = Math.floor(N / 5), counts = {};
+  const runs = [[6, gen6, check6], [7, gen7, check7], [8, gen8, check8], [9, gen9, check9], [10, gen10, check9]];
+  try{
+    runs.forEach(([mode, gen, check]) => {
+      for(let i = 0; i < per; i++){
+        ctx = `режим ${mode}`;
+        let t; try{ t = gen(); }catch(e){ chk('генератор не падает', false, e.message); continue; }
+        if(!t){ chk('генератор всегда возвращает задачу', false); continue; }
+        ctx = `режим ${mode}, ${t.type}`;
+        counts[mode] = (counts[mode] || 0) + 1; R.total++; R.tasks[t.type] = (R.tasks[t.type] || 0) + 1;
+        let svg = ''; try{ svg = drawTri(t.fig, {}); }catch(e){ chk('чертёж рисуется', false, e.message); continue; }
+        checkFig(t.fig, svg);
+        try{ check(t); }catch(e){ chk('проверка задачи не падает', false, e.stack.split('\n').slice(0, 2).join(' | ')); }
+      }
+    });
+  }finally{ _rng = prev; }
+  R.counts = counts;
+  R.checkCount = Object.keys(R.checks).reduce((a, k) => a + R.checks[k].ok + R.checks[k].bad, 0);
+  R.bad = Object.keys(R.checks).reduce((a, k) => a + R.checks[k].bad, 0);
+  return R;
+}
+
+/* =====================================================================
+   17. ИНТЕРФЕЙС ТЕМЫ «ТРЕУГОЛЬНИКИ» (режимы 6–10)
+   Режимы 9 и 10 используют те же «решение по шагам» и «как в учебнике»,
+   что и тема про углы: задача сама умеет рисовать свой чертёж (t.paint).
+   ===================================================================== */
+GENS[6] = gen6; GENS[7] = gen7; GENS[8] = gen8; GENS[9] = gen9; GENS[10] = gen10;
+MOUNTS[6] = (t, st) => mount6(t, st);
+MOUNTS[7] = (t, st) => mount7(t, st);
+MOUNTS[8] = (t, st) => t.kind === 'tvals' ? mount8vals(t, st) : mount8pair(t, st);
+MOUNTS[9] = (t, st) => mountSteps(t, st, {});
+MOUNTS[10] = (t, st) => mount5(t, st);
+TRAP_TITLES.wrongSegment = 'Показал отрезок между другими точками';
+const WHAT6 = {angle:'угол', side:'отрезок', tri:'треугольник'};
+const triSvg = (fig, o) => boardHTML(drawTri(fig, o));
+
+/* ---------- режим 6: «Найди элемент» ---------- */
+function mount6(t, stage){
+  const fig = t.fig, gate = {}, isFind = t.variant === 'find', tg = t.target, L = r => fig.L[r];
+  const arms = t.kind === 'angle' ? `${nm(t.text[2] + t.text[1])} и ${nm(t.text[2] + t.text[3])}` : '';
+  stage.innerHTML = `<p class="task">${isFind ? `Найди на рисунке ${WHAT6[t.kind]} ${nm(t.text)}. Нажми на него.` : `Как правильно записать выделенный ${WHAT6[t.kind]}?`}</p>
+    <div id="boardHost"></div><div id="ans"></div><div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  let locked = false;
+  const hl = () => t.kind === 'angle' ? {fills:[{kind:'ang', ang:tg, pat:'a'}]} : t.kind === 'side' ? {sideHl:[[tg.a, tg.b]]} : {fills:[{kind:'tri', pts:tg.pts, pat:'a'}]};
+  const em = () => t.kind === 'angle' ? {sideEm:sideEmOf(fig, tg)} : t.kind === 'side' ? {ptEm:[tg.a, tg.b]} : {sideEm:[[tg.pts[0], tg.pts[1]], [tg.pts[1], tg.pts[2]], [tg.pts[0], tg.pts[2]]]};
+  const okMark = () => t.kind === 'angle' ? {fills:[{kind:'ang', ang:tg, pat:'ok'}]} : t.kind === 'side' ? {sideHl:[[tg.a, tg.b]]} : {fills:[{kind:'tri', pts:tg.pts, pat:'ok'}]};
+  const paint = o => {
+    host.innerHTML = triSvg(fig, Object.assign({attrs:isFind && !locked ? 'class="tap"' : '', cues:t.kind === 'angle'}, isFind ? {} : hl(), o));
+    if(isFind && !locked) $('svg', host).addEventListener('click', onTap);
+  };
+  const okWhy = t.kind === 'angle' ? `${nm(t.text)}: вершина ${L(tg.v)} — средняя буква, стороны — ${arms}.`
+    : t.kind === 'side' ? `Отрезок ${nm(t.text)} соединяет точки ${t.text[0]} и ${t.text[1]}.` : `${nm(t.text)}: три вершины — ${t.text.slice(1).split('').join(', ')}.`;
+  const tip = () => toast(t.kind === 'angle' ? 'Нажми внутри угла, рядом с его вершиной' : 'Нажми прямо на линию отрезка', 2200);
+  function onTap(e){
+    if(locked) return;
+    const xy = svgXY(e.currentTarget, e);
+    if(t.kind === 'angle'){
+      const hit = triTapAngles(fig, xy[0], xy[1]); if(!hit.length){ tip(); return; }
+      if(hit.some(a => a.id === tg.id)){ judge(gate, true); locked = true; paint(Object.assign({}, okMark(), {marks:[]})); finishTask(okWhy); return; }
+      const b = hit[0], bn = nm(pick(angNotations(fig, b))), same = b.v === tg.v;
+      const lead = same ? `Ты показал ${bn}: у него та же вершина, но другие стороны.` : `Ты показал ${bn} — это угол при другой вершине.`;
+      const r = judge(gate, false, {trap:same ? 'neighbor' : 'wrongVertex',
+        hint:`<p>${lead}</p><p>У угла ${nm(t.text)} вершина — средняя буква ${L(tg.v)}, а стороны — ${arms}. Они подсвечены.</p>`,
+        reveal:`<p>${lead}</p><p>Нужный угол ${nm(t.text)} — вот он: вершина ${L(tg.v)} посередине, стороны — ${arms}.</p>`});
+      if(r === 'hint') paint(Object.assign({fills:[{kind:'ang', ang:b, pat:'bad'}]}, em()));
+      else{ locked = true; paint(Object.assign({}, okMark(), em())); finishTask(null); }
+    }else{
+      const hit = triTapSegs(fig, xy[0], xy[1]); if(!hit.length){ tip(); return; }
+      if(hit.some(s => s.id === tg.id)){ judge(gate, true); locked = true; paint(okMark()); finishTask(okWhy); return; }
+      const b = hit[0], bn = nm(L(b.a) + L(b.b)), sh = [b.a, b.b].filter(r => r === tg.a || r === tg.b);
+      let trap = 'wrongSegment', lead = `Ты показал отрезок ${bn}.`;
+      if(sh.length === 1){
+        const ang = angleAt(fig.P[sh[0]], fig.P[b.a === sh[0] ? b.b : b.a], fig.P[tg.a === sh[0] ? tg.b : tg.a]);
+        if(ang < 0.5 || ang > 179.5){ trap = 'segPart'; lead += ' Он лежит на одной прямой с нужным, но это другой отрезок (часть или вся сторона).'; }
+        else{ trap = 'segNeighbor'; lead += ' У него общий конец с нужным, но второй конец другой.'; }
+      }
+      const r = judge(gate, false, {trap, hint:`<p>${lead}</p><p>Нужен отрезок ${nm(t.text)}: он соединяет точки ${t.text[0]} и ${t.text[1]} (подсвечены).</p>`,
+        reveal:`<p>${lead}</p><p>Нужный отрезок ${nm(t.text)} — вот он: он соединяет точки ${t.text[0]} и ${t.text[1]}.</p>`});
+      if(r === 'hint') paint(Object.assign({sideHl:[[b.a, b.b]]}, em()));
+      else{ locked = true; paint(Object.assign({}, okMark(), em())); finishTask(null); }
+    }
+  }
+  if(isFind){ paint({}); return; }
+  paint({});
+  $('#ans').innerHTML = `<div class="opts two">${t.opts.list.map((o, i) => `<button class="btn math" data-i="${i}" type="button" aria-label="${esc(o.text)}">${mt(o.text)}</button>`).join('')}</div>`;
+  const hints = {
+    vertexMid:`В записи угла вершина стоит посередине. Вершина выделенного угла — точка ${t.kind === 'angle' ? L(tg.v) : ''}, значит, эта буква должна быть средней.`,
+    neighbor:t.kind === 'angle' ? 'Это запись соседнего угла: другая пара сторон. Подсвечены стороны выделенного угла — прочитай буквы на их концах.' : 'Это отрезок с общим концом, но другой второй точкой. Выделенный отрезок соединяет подсвеченные точки.',
+    wider:t.kind === 'angle' ? 'В эту запись попал лишний кусок: она охватывает больший угол. У выделенного угла только две стороны — они подсвечены.' : 'Эта запись — вся сторона, а выделена только её часть. Прочитай буквы подсвеченных точек.',
+    part:t.kind === 'angle' ? 'Это только часть выделенного угла. Выделенный угол ограничен подсвеченными сторонами.' : 'Эта запись — только часть выделенного отрезка. Прочитай буквы подсвеченных точек.',
+    other:t.kind === 'angle' ? 'Это другой угол чертежа. Найди вершину и стороны выделенного угла — они подсвечены.' : 'Это другой отрезок чертежа. Выделенный отрезок соединяет подсвеченные точки.',
+    triOther:'Это другой треугольник. У выделенного три вершины — стороны подсвечены.'
+  };
+  $$('#ans .btn').forEach(b => b.addEventListener('click', () => {
+    if(locked) return;
+    const o = t.opts.list[+b.dataset.i], ok = o.kind === 'ok', btns = $$('#ans .btn');
+    const hint = o.kind === 'triDegenerate' ? `Точки ${o.text.slice(1).split('').join(', ')} лежат на одной прямой — из них нельзя составить треугольник.` : hints[o.kind];
+    const good = t.opts.list[t.opts.correct].text;
+    const r = judge(gate, ok, {trap:o.kind, hint:`<p>${hint}</p>`, reveal:`<p>Правильная запись: ${nm(good)}. ${okWhy}</p>`});
+    if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint(okMark()); finishTask(okWhy); }
+    else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint(em()); }
+    else{ locked = true; b.classList.add('bad'); btns.forEach((x, i) => { x.disabled = true; if(i === t.opts.correct) x.classList.add('good'); }); paint(Object.assign({}, okMark(), em())); finishTask(null); }
+  }));
+}
+
+/* ---------- режим 7: «Что это такое?» ---------- */
+function mount7(t, stage){
+  const fig = t.fig, gate = {}, mk = t.marks || {}, many = t.opts.length === 4;
+  const base = {ticks:mk.ticks, marks:mk.marks, right:mk.right, angLabels:mk.angLabels, sideLabels:mk.sideLabels};
+  stage.innerHTML = `<p class="task">${t.question}</p>${t.banner ? `<div class="badge">${t.banner}</div>` : ''}
+    <div id="boardHost"></div><div class="opts${many ? ' two' : ''}" id="ans">${t.opts.map(o => `<button class="btn${many ? '' : ' big block'}" data-a="${o.id}" type="button">${o.label}</button>`).join('')}</div><div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = e => { host.innerHTML = triSvg(fig, Object.assign({}, base, e || {})); };
+  paint();
+  let locked = false;
+  $$('#ans .btn').forEach(b => b.addEventListener('click', () => {
+    if(locked) return;
+    const a = b.dataset.a, btns = $$('#ans .btn'), h = hint7(t, a);
+    const r = judge(gate, a === t.ans, {trap:h.trap, hint:`<p>${h.html}</p>`, reveal:`<p>${t.why}</p>`});
+    if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint(); finishTask(t.whyShort); }
+    else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint({sideEm:(h.em && h.em.sides) || [], ptEm:(h.em && h.em.pts) || []}); }
+    else{
+      locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(x.dataset.a === t.ans) x.classList.add('good'); });
+      const e = ['median', 'bisector', 'height', 'none'].includes(t.kind) ? hint7cev(t, t.kind === 'none' ? 'median' : t.kind).em : {sides:[], pts:[]};
+      paint({sideEm:e.sides, ptEm:e.pts}); finishTask(null);
+    }
+  }));
+}
+
+/* ---------- режим 8: «Перенеси условие на рисунок» ---------- */
+function mount8vals(t, stage){
+  const fig = t.fig, gate = {};
+  let placed = {}, armed = null, sel = null, hover = null, locked = false;
+  stage.innerHTML = `<p class="task">Перенеси условие на чертёж: впиши числа в нужные углы.</p>
+    <p class="lead">Считать ничего не нужно: пойми, какому углу принадлежит число и какие ещё углы ему равны.</p>
+    <div class="inset"><span class="px" style="font-size:10px">УСЛОВИЕ</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>
+    <div id="boardHost"></div>
+    <div class="steplab">ФИШКИ: НАЖМИ НА ФИШКУ И НА УГОЛ ИЛИ ПЕРЕТАЩИ</div><div class="tray" id="tray"></div>
+    <div id="manual"></div>
+    <div class="row" style="margin:12px 3px 0"><button class="btn big grow" id="bCheck" type="button">ПРОВЕРИТЬ</button><button class="btn" id="bClear" type="button">ОЧИСТИТЬ</button></div>
+    <div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const paint = o => {
+    o = o || {};
+    const fills = [];
+    if(sel) fills.push({kind:'ang', ang:tVAng(fig, sel), pat:'sel'});
+    if(hover && hover !== sel) fills.push({kind:'ang', ang:tVAng(fig, hover), pat:'sel'});
+    (o.fills || []).forEach(f => fills.push(f));
+    const angLabels = ['A', 'B', 'C'].map(r => ({ang:tVAng(fig, r), text:placed[r] !== undefined ? placed[r] + '°' : '', fill:(o.cell && o.cell[r]) || '#ffffff'}));
+    host.innerHTML = triSvg(fig, {attrs:locked ? '' : 'class="tap"', fills, sideEm:o.sideEm, ptEm:o.ptEm, angLabels});
+    if(!locked) $('svg', host).addEventListener('click', onBoard);
+  };
+  const vertexFromClient = ev => {
+    const svg = $('svg', host), r = svg.getBoundingClientRect();
+    if(ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return null;
+    return triTapVertex(fig, (ev.clientX - r.left) * 360 / r.width, (ev.clientY - r.top) * 360 / r.height);
+  };
+  const renderTray = () => {
+    $('#tray').innerHTML = t.chips.map(v => `<button class="chip${armed === v ? ' arm' : ''}" data-v="${v}" type="button" aria-pressed="${armed === v}">${v}°</button>`).join('');
+    $$('#tray .chip').forEach(ch => {
+      const v = +ch.dataset.v;
+      ch.addEventListener('click', ev => { if(ev.detail === 0 && !locked){ armed = armed === v ? null : v; renderTray(); } });
+      ch.addEventListener('pointerdown', e => {
+        if(locked) return;
+        e.preventDefault();
+        let moved = false, ghost = null; const x0 = e.clientX, y0 = e.clientY;
+        const move = ev => {
+          if(!moved && Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8){ moved = true; ghost = ch.cloneNode(true); ghost.classList.add('ghost'); document.body.appendChild(ghost); }
+          if(moved){ ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px'; const i = vertexFromClient(ev); if(i !== hover){ hover = i; paint(); } }
+        };
+        const up = ev => {
+          document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+          if(ghost) ghost.remove();
+          if(moved){ const i = vertexFromClient(ev); hover = null; if(i) put(i, v); else paint(); }
+          else { armed = armed === v ? null : v; renderTray(); }
+        };
+        document.addEventListener('pointermove', move); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+      });
+    });
+  };
+  const showManual = () => {
+    const m = $('#manual');
+    if(!sel){ m.innerHTML = ''; return; }
+    m.innerHTML = `<div class="qtext">Угол ${t.nameH[sel]} — впиши число:</div>
+      <div class="field"><input id="mval" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" autocomplete="off" aria-label="Число для выбранного угла"><span class="u">°</span>
+      <button class="btn" id="bPut" type="button">ВПИСАТЬ</button><button class="btn" id="bErase" type="button">СТЕРЕТЬ</button></div>`;
+    const inp = $('#mval'); if(placed[sel] !== undefined) inp.value = placed[sel];
+    const doPut = () => { const v = parseInt(inp.value, 10); if(!isNaN(v) && v > 0 && v < 181){ placed[sel] = v; sel = null; paint(); showManual(); } };
+    $('#bPut').addEventListener('click', doPut);
+    inp.addEventListener('keydown', e => { if(e.key === 'Enter') doPut(); });
+    $('#bErase').addEventListener('click', () => { delete placed[sel]; sel = null; paint(); showManual(); });
+  };
+  function put(r, v){ placed[r] = v; sel = null; hover = null; paint(); showManual(); }
+  function onBoard(e){
+    if(locked) return;
+    const xy = svgXY(e.currentTarget, e), r = triTapVertex(fig, xy[0], xy[1]);
+    if(!r) return;
+    if(armed !== null) put(r, armed);
+    else { sel = sel === r ? null : r; paint(); showManual(); }
+  }
+  renderTray(); paint();
+  const eqSides = t.X ? [[t.X, tOther(t.X)[0]], [t.X, tOther(t.X)[1]]] : [];
+  const hint8 = iss => {
+    const nmI = t.nameH[iss.r], A = tVAng(fig, iss.r);
+    if(iss.kind === 'wrong') return {trap:'wrongPlace', html:`<p>В угол ${nmI} поставлено ${iss.got}°, но по условию там другое число.</p><p>Угол ${nmI} лежит при вершине ${tL(fig, iss.r)}. Проверь, какому углу относится каждое число.</p>`, fills:[{kind:'ang', ang:A, pat:'bad'}], em:{}};
+    if(iss.kind === 'isoApex') return {trap:'isoApex', html:`<p>Число ${iss.got}° стоит в угле ${nmI}, но по условию оно относится к другому углу.</p><p>Углы при основании равны между собой, но сколько в них градусов, придётся считать. Считать мы пока не будем — оставь их пустыми.</p>`, fills:[{kind:'ang', ang:A, pat:'bad'}], em:{sideEm:eqSides}};
+    if(iss.kind === 'extra') return {trap:'extraNum', html:`<p>Для угла ${nmI} числа в условии нет, и равным известному он не является.</p><p>Оставь его пустым: считать мы пока не будем.</p>`, fills:[{kind:'ang', ang:A, pat:'bad'}], em:{}};
+    if(iss.kind === 'missGiven') return {trap:'missGiven', html:`<p>Не все числа из условия перенесены на чертёж.</p><p>Проверь: по условию ${nmI} = ${t.expected[iss.r]}°. Это угол при вершине ${tL(fig, iss.r)}.</p>`, fills:[{kind:'ang', ang:A, pat:'a'}], em:{ptEm:[iss.r]}};
+    return {trap:'isoMissEq', html:`<p>Есть ещё угол, значение которого уже известно, считать не нужно.</p><p>По условию две стороны равны (подсвечены): значит, это равнобедренный треугольник, а углы при его основании равны.</p>`, fills:[{kind:'ang', ang:A, pat:'b'}], em:{sideEm:eqSides}};
+  };
+  const reveal8 = () => {
+    const g = t.given.map(r => `<li>${t.nameH[r]} = ${t.an[r]}° — по условию.</li>`).join('');
+    const eq = t.form === 'isoBase' ? `<li>Равные стороны — боковые, значит, углы при основании равны: ${t.nameH[tOther(t.X)[1]]} тоже ${t.an[tOther(t.X)[0]]}°.</li>` : '';
+    return `<p>Вот как надо:</p><ul style="margin:0;padding-left:20px">${g}${eq}</ul><p>Остальные углы придётся считать: сейчас они остаются пустыми.</p>`;
+  };
+  $('#bClear').addEventListener('click', () => { if(locked) return; placed = {}; sel = null; armed = null; renderTray(); paint(); showManual(); });
+  $('#bCheck').addEventListener('click', () => {
+    if(locked) return;
+    const issues = checkTvals(t, placed), first = issues[0];
+    if(!first && Object.keys(placed).length === 0){ setFb('<p>Сначала впиши числа из условия в углы на чертеже.</p>', 'hint'); return; }
+    const hint = first ? hint8(first) : null;
+    const green = () => Object.fromEntries(Object.keys(placed).map(k => [k, '#c8f5b0']));
+    const r = judge(gate, !first, {trap:hint && hint.trap, hint:hint && hint.html, reveal:reveal8()});
+    if(r === 'right'){ locked = true; sel = null; armed = null; renderTray(); paint({cell:green()}); $('#manual').innerHTML = ''; finishTask(t.form === 'isoBase' ? 'Всё верно: число стоит в своём угле, а второй угол при основании равнобедренного ему равен.' : 'Всё верно: числа из условия стоят в своих углах, лишнего нет.'); }
+    else if(r === 'hint') paint({fills:hint.fills, sideEm:hint.em.sideEm, ptEm:hint.em.ptEm});
+    else{ locked = true; sel = null; armed = null; renderTray(); placed = Object.assign({}, t.expected); paint({cell:green()}); $('#manual').innerHTML = ''; finishTask(null); }
+  });
+}
+
+function mount8pair(t, stage){
+  const fig = t.fig, g1 = {}, g2 = {}, pk = t.picks, L = r => fig.L[r];
+  let sel = [], phase = 1, locked = false;
+  stage.innerHTML = `<p class="task">Перенеси условие на чертёж: найди то, что в нём названо.</p>
+    <div class="inset"><span class="px" style="font-size:10px">УСЛОВИЕ</span><div class="task" style="margin:6px 0 0">${t.text}</div></div>
+    <p class="lead" id="q1">${pk.type === 'side' ? 'Нажми на отрезки, о которых говорится в условии (по одному), затем на «ПРОВЕРИТЬ».' : pk.any ? 'Нажми на один из углов, о которых говорится в условии, затем на «ПРОВЕРИТЬ».' : 'Нажми на углы, о которых говорится в условии (по одному), затем на «ПРОВЕРИТЬ».'}</p>
+    <div id="boardHost"></div><div id="q2"></div>
+    <div class="row" style="margin:12px 3px 0" id="chkRow"><button class="btn big grow" id="bCheck" type="button">ПРОВЕРИТЬ</button></div>
+    <div id="fb"></div><div id="nextbar"></div>`;
+  const host = $('#boardHost');
+  const selFills = () => pk.type === 'ang' ? sel.map(id => ({kind:'ang', ang:angById(fig, id), pat:'sel'})) : [];
+  const selSides = () => pk.type === 'side' ? sel.map(id => { const s = segList(fig).find(z => z.id === id); return [s.a, s.b]; }) : [];
+  const goodFills = () => pk.type === 'ang' ? pk.items.map((id, i) => ({kind:'ang', ang:angById(fig, id), pat:i ? 'b' : 'a'})) : [];
+  const goodSides = () => pk.type === 'side' ? pk.items.map(id => { const s = segList(fig).find(z => z.id === id); return [s.a, s.b]; }) : [];
+  const paint = o => {
+    o = o || {};
+    host.innerHTML = triSvg(fig, {attrs:phase === 1 && !locked ? 'class="tap"' : '', fills:phase === 1 ? selFills() : goodFills(), sideHl:phase === 1 ? selSides() : goodSides(), sideEm:o.sideEm, ptEm:o.ptEm, cues:pk.type === 'ang'});
+    if(phase === 1 && !locked) $('svg', host).addEventListener('click', onTap);
+  };
+  function onTap(e){
+    const xy = svgXY(e.currentTarget, e);
+    const hit = pk.type === 'side' ? triTapSegs(fig, xy[0], xy[1]) : triTapAngles(fig, xy[0], xy[1]);
+    if(!hit.length) return;
+    const id = hit[0].id;
+    sel = sel.includes(id) ? sel.filter(x => x !== id) : sel.concat([id]); paint();
+  }
+  paint();
+  const V = t.V, U = t.U, W = t.W, VD = t.sub === 'iso' ? '' : nm(L(V) + L('D')), UW = t.sub === 'iso' ? '' : nm(L(U) + L(W));
+  const em1 = {
+    med:{sideEm:[], ptEm:['D']}, bis:{sideEm:[[V, U], [V, 'D'], [V, W]], ptEm:[]}, hei:{sideEm:[], ptEm:['D']}, iso:{sideEm:[], ptEm:[t.X].concat(tOther(t.X))}
+  }[t.sub];
+  const h1 = {
+    med:`Медиана ${VD} делит сторону ${UW} пополам. Выбери два равных отрезка, на которые она разбила сторону.`,
+    bis:`Биссектриса ${VD} делит угол ${nm('∠' + L(U) + L(V) + L(W))} на два равных угла. Выбери эти два угла.`,
+    hei:`Высота ${VD} перпендикулярна стороне ${UW}. Выбери один из углов при точке D: он прямой.`,
+    iso:`В условии названы две стороны: ${t.text}. Найди их на чертеже по буквам и выбери обе.`
+  }[t.sub];
+  const need = pk.any ? 1 : pk.items.length;
+  $('#bCheck').addEventListener('click', () => {
+    if(locked || phase !== 1) return;
+    const ok = pk.any ? sel.length === 1 && pk.items.includes(sel[0]) : sel.length === need && pk.items.every(id => sel.includes(id));
+    const r = judge(g1, ok, {trap:'pickWrong', hint:`<p>${sel.length !== need ? `Нужно выбрать ${need === 1 ? 'один элемент' : 'два элемента'}. ` : ''}${h1}</p>`, reveal:`<p>${h1}</p><p>Вот они на чертеже.</p>`, onHint:null});
+    if(r === 'hint') paint(em1);
+    else{ phase = 2; sel = []; paint(); startPhase2(r === 'shown'); }
+  });
+  function startPhase2(wasShown){
+    $('#chkRow').innerHTML = '';
+    $('#q1').innerHTML = t.ask;
+    if(!wasShown) setFb('<p>Элементы найдены верно.</p>', 'ok');
+    $('#q2').innerHTML = `<div class="opts">${t.opts.map(o => `<button class="btn block math" data-id="${o.id}" type="button">${mt(o.text)}</button>`).join('')}</div>`;
+    const h2 = {
+      med:'Медиана — про середину стороны. Какое равенство говорит о том, что точка делит сторону пополам?',
+      bis:'Биссектриса — про углы. Какое равенство говорит о том, что угол разделён пополам?',
+      hei:'Высота — про перпендикуляр. Какое высказывание говорит о прямом угле?',
+      iso:'В равнобедренном треугольнике равны углы при основании. Основание — сторона без равных. Какие два угла лежат на основании?'
+    }[t.sub];
+    $$('#q2 .btn').forEach(b => b.addEventListener('click', () => {
+      if(locked) return;
+      const o = t.opts.find(x => x.id === b.dataset.id), btns = $$('#q2 .btn');
+      const r = judge(g2, !!o.truth, {trap:'consequence', hint:`<p>${h2}</p>`, reveal:`<p>${t.okWhy}</p>`});
+      if(r === 'right'){ locked = true; b.classList.add('good'); btns.forEach(x => x.disabled = true); paint(); finishTask(t.okWhy); }
+      else if(r === 'hint'){ b.classList.add('bad'); b.disabled = true; paint(em1); }
+      else{ locked = true; b.classList.add('bad'); btns.forEach(x => { x.disabled = true; if(t.opts.find(z => z.id === x.dataset.id).truth) x.classList.add('good'); }); paint(); finishTask(null); }
+    }));
+  }
 }
 
 /* ---------- запуск ---------- */
